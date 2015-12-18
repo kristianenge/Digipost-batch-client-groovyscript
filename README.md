@@ -27,9 +27,10 @@ Groovy script for sending documents to Digipost batch API.
 
 See Digipost/report/*.csv for reports of the run 
 
-Howto install Groovy on Windows devices:
+Install Groovy on Windows devices:
 * Download installer
  * http://dl.bintray.com/groovy/Distributions/groovy-2.4.5-installer.exe
+ 
 
 
 
