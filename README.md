@@ -25,6 +25,8 @@ Groovy script for sending documents to Digipost batch API.
 * groovy DigipostBatch.groovy -mottakersplitt
 * groovy DigipostBatch.groovy -masseutsendelse
 
+See Digipost/report/*.csv for reports of the run
+
 
 
 
