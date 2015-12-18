@@ -37,9 +37,9 @@ class Main extends Script {
 		static ResultXMLFileName= 'mottakersplitt-resultat.xml'
 	}
 
-	def GenerateConfigFile(config){
-		HDD.save(config,Constants.ConfigFile)
-	}
+	static void main(String[] args) {           
+        InvokerHelper.runScript(Main, args)     
+    }
 
     def run() {
 
@@ -151,9 +151,9 @@ class Main extends Script {
 			println '##############################################'
     }
 
-    static void main(String[] args) {           
-        InvokerHelper.runScript(Main, args)     
-    }
+    def GenerateConfigFile(config){
+		HDD.save(config,Constants.ConfigFile)
+	}
 
     def CreateFolderStructure(){
     	println 'Create folder struct'
@@ -201,6 +201,18 @@ class Main extends Script {
 		def ReturPoststed =''
 	}
 
+	
+
+	@ToString(includePackage = false,ignoreNulls = true,includeNames=true)
+	class Person {
+		def ssn,navn,adresselinje1,postnummer,poststed,mobile,fil_navn,vedlegg_navn,kunde_id,fulltNavn,resultat,adresselinje2,land
+	}
+
+	@ToString(ignoreNulls = true,includeNames=true)
+	class Organization {
+		def kunde_id,orgNumber,name,resultat
+	}
+
 	class HDD {
 	    static save(Object content, String filePath) {
 	    	def configJson = new JsonBuilder(content).toPrettyString()
@@ -214,16 +226,6 @@ class Main extends Script {
 	    static Object load(String filePath) {
 	        return new JsonSlurper().parseText(new File(filePath).text)
 	    }
-	}
-
-	@ToString(includePackage = false,ignoreNulls = true,includeNames=true)
-	class Person {
-		def ssn,navn,adresselinje1,postnummer,poststed,mobile,fil_navn,vedlegg_navn,kunde_id,fulltNavn,resultat,adresselinje2,land
-	}
-
-	@ToString(ignoreNulls = true,includeNames=true)
-	class Organization {
-		def kunde_id,orgNumber,name,resultat
 	}
 
 	def PopulateMottagerListFromSourceCSV(Boolean skipHeader){ 
@@ -361,52 +363,76 @@ class Main extends Script {
 			  	for(def m : mottagerList){
 			  		if(m instanceof Person){
 			  			def postType=''
-			  			if(config.FallbackToPrint){postType ='xsi:type:brev-med-print'}
-			  			"brev"(postType){
-			  				"mottaker"(){
-			  					"kunde-id"(m.kunde_id);
-			  					if(m.ssn != null && m.ssn.length() == 11)
-			     					"foedselsnummer"(m.ssn)
-			     				else{
-				    	 			"navn"(){
-						     			"navn-format1"(){
-						     				"fullt-navn-fornavn-foerst"(m.fulltNavn)
-						     			}
-				    	 			}
-				    	 			"adresse"(){
-						     			"adresse-format1"(){
-						     				"adresselinje1"(m.adresselinje1)
-						     				"postnummer"(m.postnummer)
-						     				"poststed"(m.poststed)
-						     			}
-				    	 			}
-			     				}
-			  					
-			  				}
-				  			"hoveddokument"("uuid":UUID.randomUUID().toString(),"refid":"id_"+m.kunde_id)
-				  			if(config.FallbackToPrint){
-						  		"fysisk-print"(){
-						  			"postmottaker"(m.fulltNavn);
-						  			if(m.country == null || m.country == 'NORWAY'){
-							  			"norsk-mottakeradresse"{
-							  				"adresselinje1"(m.adresselinje1)
-							  				"postnummer"(m.postnummer)
-							  				"poststed"(m.poststed)
+			  			if(config.FallbackToPrint){
+				  			"brev"('xsi:type':'brev-med-print'){
+				  				"mottaker"(){
+				  					"kunde-id"(m.kunde_id);
+				  					if(m.ssn != null && m.ssn.length() == 11)
+				     					"foedselsnummer"(m.ssn)
+				     				else{
+					    	 			"navn"(){
+							     			"navn-format1"(){
+							     				"fullt-navn-fornavn-foerst"(m.fulltNavn)
+							     			}
+					    	 			}
+					    	 			"adresse"(){
+							     			"adresse-format1"(){
+							     				"adresselinje1"(m.adresselinje1)
+							     				"postnummer"(m.postnummer)
+							     				"poststed"(m.poststed)
+							     			}
+					    	 			}
+				     				}
+				  					
+				  				}
+					  			"hoveddokument"("uuid":UUID.randomUUID().toString(),"refid":"id_"+m.kunde_id)
+							  		"fysisk-print"(){
+							  			"postmottaker"(m.fulltNavn);
+							  			if(m.country == null || m.country == 'NORWAY'){
+								  			"norsk-mottakeradresse"{
+								  				"adresselinje1"(m.adresselinje1)
+								  				"postnummer"(m.postnummer)
+								  				"poststed"(m.poststed)
+								  			}
 							  			}
-						  			}
-						  			else{
-						  				"utenlandsk-mottakeradresse"{
-			        	                	"adresselinje1"(m.adresselinje1)
-			        	                	"land"(m.country)
-		            	            	}
-						  			}
-						  			"retur-postmottaker"(config.ReturPostmottaker)
-						  			"norsk-returadresse"{
-						  				"adresselinje1"(config.ReturAdresse)
-						  				"postnummer"(config.ReturPostnummer)
-						  				"poststed"(config.ReturPoststed)
-						  			}
-						  		}
+							  			else{
+							  				"utenlandsk-mottakeradresse"{
+				        	                	"adresselinje1"(m.adresselinje1)
+				        	                	"land"(m.country)
+			            	            	}
+							  			}
+							  			"retur-postmottaker"(config.ReturPostmottaker)
+							  			"norsk-returadresse"{
+							  				"adresselinje1"(config.ReturAdresse)
+							  				"postnummer"(config.ReturPostnummer)
+							  				"poststed"(config.ReturPoststed)
+							  			}
+							  		}
+				  			}
+			  			}
+			  			else{
+			  				"brev"(){
+				  				"mottaker"(){
+				  					"kunde-id"(m.kunde_id);
+				  					if(m.ssn != null && m.ssn.length() == 11)
+				     					"foedselsnummer"(m.ssn)
+				     				else{
+					    	 			"navn"(){
+							     			"navn-format1"(){
+							     				"fullt-navn-fornavn-foerst"(m.fulltNavn)
+							     			}
+					    	 			}
+					    	 			"adresse"(){
+							     			"adresse-format1"(){
+							     				"adresselinje1"(m.adresselinje1)
+							     				"postnummer"(m.postnummer)
+							     				"poststed"(m.poststed)
+							     			}
+					    	 			}
+				     				}
+				  					
+				  				}
+					  			"hoveddokument"("uuid":UUID.randomUUID().toString(),"refid":"id_"+m.kunde_id)
 				  			}
 			  			}
 			  		}
