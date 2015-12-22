@@ -80,6 +80,7 @@ class Main extends Script {
 		}
 		else if(args[0] == '-test'){
 			Config config = HDD.load(Constants.ConfigFile)
+			CleanGeneratedFiles()
 			Test(config)
 		}
 		else{
@@ -128,8 +129,10 @@ class Main extends Script {
 			println 'MottagerList.size == '+ mottagerList.size()
 	    	def mottakersplittXml = MakeMottakerSplittXML(mottagerList,config)
 	    	assert mottakersplittXml
+	    	WriteXML(Constants.JobDir+Constants.RequestFileNameMottakersplitt,mottakersplittXml)
 	    	def masseutsendelseXml = MakeMasseutsendelseWithPrint(mottagerList,config)
         	assert masseutsendelseXml
+        	WriteXML(Constants.JobDir+Constants.RequestFileNameMasseutsendelse,masseutsendelseXml)
 			println '##############################################'
     }
 
@@ -323,7 +326,7 @@ class Main extends Script {
 	{
 		def file  = new File(Constants.SourcePath+"ExampleFormat.csv")
 		file << Constants.CsvHeader+'\n'
-		file << '01;;Ola harIkkeTilgangPåFødselsnummer;Vegen 1;0001;Oslo;;01.pdf;;Norway'+'\n'//By name and address
+		file << '01;;Ola Normann;Vegen 1;0001;Oslo;;01.pdf;;Norway'+'\n'//By name and address
 		file << '02;;Åke Svenske;Gatan 1;0001;Stockholm;;02.pdf;;Sweden'+'\n'//By name and address
 		file << '03;31108412312;;;;;;03.pdf;;Norway'+'\n'//By SSN
 		file << '04;;;;;;;04.pdf;123123;Norway'+'\n'//Bedrift
@@ -441,17 +444,17 @@ class Main extends Script {
 					  			"hoveddokument"("uuid":UUID.randomUUID().toString(),"refid":"id_"+m.kunde_id)
 							  		"fysisk-print"(){
 							  			"postmottaker"(m.fulltNavn);
-							  			if(m.country == null || m.country == 'NORWAY'){
+							  			if(m.land == null || m.land == 'NORWAY'){
 								  			"norsk-mottakeradresse"{
 								  				"adresselinje1"(m.adresselinje1)
-								  				"postnummer"(m.postnummer)
+								  				"postnummer"(m.postnummer.padLeft(4,'0'))
 								  				"poststed"(m.poststed)
 								  			}
 							  			}
 							  			else{
 							  				"utenlandsk-mottakeradresse"{
 				        	                	"adresselinje1"(m.adresselinje1)
-				        	                	"land"(m.country)
+				        	                	"land"(m.land)
 			            	            	}
 							  			}
 							  			"retur-postmottaker"(config.ReturPostmottaker)
@@ -478,7 +481,7 @@ class Main extends Script {
 					    	 			"adresse"(){
 							     			"adresse-format1"(){
 							     				"adresselinje1"(m.adresselinje1)
-							     				"postnummer"(m.postnummer)
+							     				"postnummer"(m.postnummer).padLeft(4,'0')
 							     				"poststed"(m.poststed)
 							     			}
 					    	 			}
