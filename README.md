@@ -5,7 +5,7 @@ Groovy script for sending documents to Digipost batch API.
 1. git clone git@github.com:kristianenge/Digipost-batch-client-groovyscript.git
 2. cd Digipost-batch-client-groovyscript
 3. groovy DigipostBatch.groovy -init
-4. cp ../[yoursshkey]  Digipost/SFTP/keys/key.txt -- From https://www.digipost.no/app/post#/org/config/sftp
+4. copy ../[yoursshkey] to ./Digipost/SFTP/keys/key.txt -- From https://www.digipost.no/app/post#/org/config/sftp
 5. convert your excel to the format in ./Digipost/Source/ExampleFormat.csv
  * save it as ./Digipost/Source/source.csv with UTF8 encoding
 6. copy all the PDF/HTML files to Digipost/Source
