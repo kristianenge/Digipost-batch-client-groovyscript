@@ -44,12 +44,7 @@ class Main extends Script {
     def run() {
 
     	if(!args){
-    		println 'Usage::'
-    		println '* Mottakersplitt'
-    		println '   -init (Creates folder structure). Example[groovy Mottakersplitt.groovy -init]'
-    		println '   -clean (Deletes folder structure). Example[groovy Mottakersplitt.groovy -clean]'
-    		println '   -mottakersplitt (Creates mottakersplitt shipment, based on your source.csv). Example[groovy Mottakersplitt.groovy -mottakersplitt]'
-    		println '   -masseutsendelse (Creates mottakersplitt shipment, based on your source.csv). Example[groovy Mottakersplitt.groovy -mottakersplitt]'
+    		HelpText()
     	}
     	else if(args[0] == '-init')
     	{
@@ -77,8 +72,61 @@ class Main extends Script {
     		CleanGeneratedFiles()
     		Masseutsendelse(config)
 		}
+		else if(args[0] == '-test'){
+			Config config = HDD.load(Constants.ConfigFile)
+			Test(config)
+		}
+		else{
+			HelpText()
+		}
 
     }
+
+    def HelpText(){
+    		println 'Usage::'
+    		println '* Mottakersplitt'
+    		println '   -init (Creates folder structure). Example[groovy Mottakersplitt.groovy -init]'
+    		println '   -clean (Deletes folder structure). Example[groovy Mottakersplitt.groovy -clean]'
+    		println '   -test (Test to see if the program can parse the source.csv and build mottager/masseutsendelse -xml). Example[groovy Mottakersplitt.groovy -test]'
+    		println '   -mottakersplitt (Creates mottakersplitt shipment, based on your source.csv). Example[groovy Mottakersplitt.groovy -mottakersplitt]'
+    		println '   -masseutsendelse (Creates mottakersplitt shipment, based on your source.csv). Example[groovy Mottakersplitt.groovy -mottakersplitt]'
+    }
+
+    def Test(Config config){
+    	println '############-=Test=-###############'
+    	println '[p] == person, [b] == bedrift'
+        	def mottagerList = PopulateMottagerListFromSourceCSV(true)
+        	assert mottagerList.size() > 0
+        	mottagerList.each { mottager ->
+    			print '['
+    			if(mottager instanceof Person) //def ssn,adresselinje1,postnummer,poststed,mobile,fil_navn,vedlegg_navn,kunde_id,fulltNavn,resultat,adresselinje2,land
+    			{
+    				print 'p'
+    				assert (mottager.kunde_id  && !mottager.kunde_id.allWhitespace)
+    				assert (mottager.ssn && !mottager.ssn.allWhitespace) || ((mottager?.fulltNavn && !mottager.fulltNavn.allWhitespace) && (mottager.adresselinje1 && !mottager.adresselinje1.allWhitespace) && (mottager.postnummer && !mottager.postnummer.allWhitespace) && (mottager.poststed && !mottager.poststed.allWhitespace))
+    				assert (mottager.fil_navn && !mottager.fil_navn.allWhitespace)
+    				assert (mottager.land && !mottager.land.allWhitespace)
+
+    			}
+    			else if(mottager instanceof Organization) //def kunde_id,orgNumber,name,resultat
+    			{
+    				print 'b'
+    				assert (mottager.kunde_id  && !mottager.kunde_id.allWhitespace)
+    				assert (mottager.orgNumber  && !mottager.orgNumber.allWhitespace)
+    				assert (mottager.name  && !mottager.name.allWhitespace)
+    			}
+    			print ']'
+			}
+
+			println ''
+			println 'MottagerList.size == '+ mottagerList.size()
+	    	def mottakersplittXml = MakeMottakerSplittXML(mottagerList,config)
+	    	assert mottakersplittXml
+	    	def masseutsendelseXml = MakeMasseutsendelseWithPrint(mottagerList,config)
+        	assert masseutsendelseXml
+			println '##############################################'
+    }
+
 
     def Mottakersplitt(Config config){
     	println '############-=Mottakersplitt=-###############'
@@ -205,7 +253,7 @@ class Main extends Script {
 
 	@ToString(includePackage = false,ignoreNulls = true,includeNames=true)
 	class Person {
-		def ssn,navn,adresselinje1,postnummer,poststed,mobile,fil_navn,vedlegg_navn,kunde_id,fulltNavn,resultat,adresselinje2,land
+		def ssn,adresselinje1,postnummer,poststed,mobile,fil_navn,vedlegg_navn,kunde_id,fulltNavn,resultat,adresselinje2,land
 	}
 
 	@ToString(ignoreNulls = true,includeNames=true)
@@ -246,7 +294,7 @@ class Main extends Script {
 					)
 				mottagerList << virksomhet
 			}
-		  	else if(fields[1] || fields[2]){
+		  	else {
 				def person = new Person(
 					kunde_id:fields[0],
 					ssn:fields[1],
@@ -277,7 +325,6 @@ class Main extends Script {
 	}
 
 	def MakeMottakerSplittXML(ArrayList mottagerList,Config config){
-		println 'Creating mottakersplitt.xml from ssn - list'
 		def writer = new StringWriter()
 		def xml = new MarkupBuilder(writer)	
 		
@@ -308,7 +355,7 @@ class Main extends Script {
 					     		"adresse"(){
 					     			"adresse-format1"(){
 					     				"adresselinje1"(m.adresselinje1)
-					     				"postnummer"(m.postnummer)
+					     				"postnummer"(m.postnummer.padLeft(4,'0'))
 					     				"poststed"(m.poststed)
 					     			}
 					     		}
@@ -378,7 +425,7 @@ class Main extends Script {
 					    	 			"adresse"(){
 							     			"adresse-format1"(){
 							     				"adresselinje1"(m.adresselinje1)
-							     				"postnummer"(m.postnummer)
+							     				"postnummer"(m.postnummer.padLeft(4,'0'))
 							     				"poststed"(m.poststed)
 							     			}
 					    	 			}
@@ -444,6 +491,8 @@ class Main extends Script {
 		return writer.toString()
 	}
 
+
+	
 	Map PopulateResultMapFromResult(JobType jobType){
 		assert jobType
 		
