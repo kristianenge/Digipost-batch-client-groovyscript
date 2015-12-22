@@ -22,6 +22,7 @@ Groovy script for sending documents to Digipost batch API.
  * "sftpPassphrase": "", -- If you have a personal password on your ssh key
  * "autoGodkjennJobb": true, -- 
  * "behandler_id": "" -- same as avsender_id if no Partner
+* run 'groovy DigipostBatch.groovy -test' to see if the source format is OK
 * groovy DigipostBatch.groovy -mottakersplitt
 * groovy DigipostBatch.groovy -masseutsendelse
 
