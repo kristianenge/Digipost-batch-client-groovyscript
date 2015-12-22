@@ -139,8 +139,7 @@ class Main extends Script {
 
     def Mottakersplitt(Config config){
     	println '############-=Mottakersplitt=-###############'
-        	println 'Populating PersonList from CSV'   
-	
+        	println 'Populating PersonList from CSV'
         	def mottagerList = PopulateMottagerListFromSourceCSV(true)
         	if(mottagerList.size() == 0){
 				println('personList size: '+mottagerList.size())
@@ -163,6 +162,7 @@ class Main extends Script {
 			println 'Populating result map'
 			def resultat = PopulateResultMapFromResult(JobType.MOTTAKERSPLITT)
 			println('Count source['+mottagerList.size()+'], count result['+resultat.size()+']')
+			AggregateResult(resultat)
 			println 'Updating candidates based on result'
 			UpdateCandidateWithResult(mottagerList,resultat)
 			println 'Make CSV Report'
@@ -171,24 +171,31 @@ class Main extends Script {
 			println '##############################################'
     }
 
+    def AggregateResult(resultat){
+    	def digipostCount  = resultat.count { key, value -> value == 'DIGIPOST' } 
+		def identifiedCount  = resultat.count { key, value -> value == 'IDENTIFISERT' } 
+		def totalCount = resultat.size()
+		println 'Total: '+totalCount
+		if(totalCount > 0){
+			println 'Digipost :'+ digipostCount + ' '+((digipostCount / totalCount) * 100) +'%'
+			println 'Identified :' + identifiedCount + ' '+((identifiedCount / totalCount) * 100) +'%'
+		}
+    }
+
     def Masseutsendelse(Config config){
     	println '############-=Masseutsendelse=-###############'
-        	println 'Populating PersonList from CSV'   
-	
+        	println 'Populating PersonList from CSV' 
         	def mottagerList = PopulateMottagerListFromSourceCSV(true)
         	if(mottagerList.size() == 0){
 				println('personList size: '+mottagerList.size())
 				println('NO recievers.. check '+Constants.SourcePath+Constants.SourceFile+'.');
 			}
-	
         	println 'Make Masseutsendelse XML'
         	def xml = MakeMasseutsendelseWithPrint(mottagerList,config)
-        	//String MakeMasseutsendelseWithPrint(String emne,ArrayList mottagerList,ReturAdresse returAdresse,Config config){
         	println 'Write XML'
         	WriteXML(Constants.JobDir+Constants.RequestFileNameMasseutsendelse,xml)
 			println 'Moving PDFs to Job dir'
 			MovePDFToJobDir(mottagerList)
-
 			println 'ZIPing files'
 			ZipFiles(JobType.MASSEUTSENDELSE)
 			println 'SFTP to Digipost'
@@ -200,6 +207,7 @@ class Main extends Script {
 			println 'Populating result map'
 			def resultat = PopulateResultMapFromResult(JobType.MASSEUTSENDELSE)
 			println('Count source['+mottagerList.size()+'], count result['+resultat.size()+']')
+			AggregateResult(resultat)
 			println 'Updating candidates based on result'
 			UpdateCandidateWithResult(mottagerList,resultat)
 			println 'Make CSV Report'
@@ -257,8 +265,6 @@ class Main extends Script {
 		def ReturPostnummer = ''
 		def ReturPoststed =''
 	}
-
-	
 
 	@ToString(includePackage = false,ignoreNulls = true,includeNames=true)
 	class Person {
@@ -499,7 +505,6 @@ class Main extends Script {
 
 		return writer.toString()
 	}
-
 
 	
 	Map PopulateResultMapFromResult(JobType jobType){
@@ -745,7 +750,6 @@ class Main extends Script {
 				
 			}
 			else if(file.getName().endsWith(".zip") && file.getName().contains("resultat") && file.getName().contains(query)){
-				println "unzipper"+file.getName();
 				unzipFile(file.getAbsolutePath());
 			}
 		}
