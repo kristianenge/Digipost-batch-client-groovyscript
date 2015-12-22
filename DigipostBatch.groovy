@@ -1,4 +1,3 @@
-
 import org.codehaus.groovy.runtime.InvokerHelper
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
