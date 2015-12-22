@@ -53,7 +53,14 @@ class Main extends Script {
     	}
     	else if(args[0] == '-clean')
     	{
-    		CleanFolderStructure()
+    		if(args.size() >= 2 && args[1] == 'all'){
+    			println 'Clean all'
+    			CleanFolderStructure()
+    		}
+    		else{
+    			println 'Clean generated files'
+    			CleanGeneratedFiles()
+    		}
     	}
     	else if(args[0] == '-mottakersplitt')
     	{
