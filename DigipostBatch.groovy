@@ -121,8 +121,7 @@ class Main extends Script {
     	println '[p] == person, [b] == bedrift'
         	def mottagerList = PopulateMottagerListFromSourceCSV(true)
         	assert mottagerList.size() > 0
-        	println ''
-			println 'MottagerList.size == '+ mottagerList.size()
+        	
         	mottagerList.each { mottager ->
     			if(testMottakersplitt){
 	    			print 'Mottakersplitt['
@@ -135,7 +134,7 @@ class Main extends Script {
 	    			println '] - OK'
     			}
 			}
-
+			println 'MottagerList.size == '+ mottagerList.size()
 			if(testMottakersplitt){
 		    	def mottakersplittXml = MakeMottakerSplittXML(mottagerList,config)
 		    	assert mottakersplittXml
@@ -196,7 +195,7 @@ class Main extends Script {
         	def mottagerList = PopulateMottagerListFromSourceCSV(true)
         	if(mottagerList.size() == 0){
 				println('personList size: '+mottagerList.size())
-				println('NO recievers.. check '+Constants.SourcePath+Constants.SourceFile+'.');
+				println('NO recievers.. check '+Constants.SourcePath+Constants.SourceFile+'.')
 			}
 	
         	println 'Make Mottakersplitt XML'
@@ -241,7 +240,7 @@ class Main extends Script {
         	def mottagerList = PopulateMottagerListFromSourceCSV(true)
         	if(mottagerList.size() == 0){
 				println('personList size: '+mottagerList.size())
-				println('NO recievers.. check '+Constants.SourcePath+Constants.SourceFile+'.');
+				println('NO recievers.. check '+Constants.SourcePath+Constants.SourceFile+'.')
 			}
         	println 'Make Masseutsendelse XML'
         	def xml = MakeMasseutsendelseWithPrint(mottagerList,config)
@@ -352,7 +351,7 @@ class Main extends Script {
 
 	def PopulateMottagerListFromSourceCSV(Boolean skipHeader){ 
 		ArrayList mottagerList = new ArrayList();
-		boolean skip = skipHeader;
+		boolean skip = skipHeader
 		def counter = 1;
 		new File(Constants.SourcePath+Constants.SourceFile).splitEachLine(Constants.Csv_delimeter) {fields ->
 			if(skip){
