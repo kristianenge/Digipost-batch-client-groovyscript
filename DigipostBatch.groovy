@@ -1,6 +1,7 @@
 import org.codehaus.groovy.runtime.InvokerHelper
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
+import groovy.transform.InheritConstructors
 @Grab(group='com.jcraft', module='jsch', version='0.1.46')
 import com.jcraft.jsch.*
 import java.nio.file.*
@@ -79,9 +80,25 @@ class Main extends Script {
     		Masseutsendelse(config)
 		}
 		else if(args[0] == '-test'){
+			def shouldTestMottakersplitt,shouldTestMasseutsendelse = false
+
+			if(args.size() >= 2 && args[1] == 'mottakersplitt'){
+    			println 'Testing mottakersplitt'
+    			shouldTestMottakersplitt = true
+
+    		}
+    		else if(args.size() >= 2 && args[1] == 'masseutsendelse'){
+    			println 'Testing masseutsendelse'
+    			shouldTestMasseutsendelse = true
+
+    		}
+    		else{
+    			println 'Testing mottakersplitt and masseutsendelse'
+    			shouldTestMottakersplitt = shouldTestMasseutsendelse = true
+    		}
 			Config config = HDD.load(Constants.ConfigFile)
 			CleanGeneratedFiles()
-			Test(config)
+			Test(config,shouldTestMottakersplitt,shouldTestMasseutsendelse)
 		}
 		else{
 			HelpText()
@@ -99,41 +116,77 @@ class Main extends Script {
     		println '   -masseutsendelse (Creates mottakersplitt shipment, based on your source.csv). Example[groovy Mottakersplitt.groovy -mottakersplitt]'
     }
 
-    def Test(Config config){
+    def Test(Config config,Boolean testMottakersplitt,Boolean testMasseutsendelse){
     	println '############-=Test=-###############'
     	println '[p] == person, [b] == bedrift'
         	def mottagerList = PopulateMottagerListFromSourceCSV(true)
         	assert mottagerList.size() > 0
+        	println ''
+			println 'MottagerList.size == '+ mottagerList.size()
         	mottagerList.each { mottager ->
-    			print '['
-    			if(mottager instanceof Person) //def ssn,adresselinje1,postnummer,poststed,mobile,fil_navn,vedlegg_navn,kunde_id,fulltNavn,resultat,adresselinje2,land
-    			{
-    				print 'p'
-    				assert (mottager.kunde_id  && !mottager.kunde_id.allWhitespace)
-    				assert (mottager.ssn && !mottager.ssn.allWhitespace) || ((mottager?.fulltNavn && !mottager.fulltNavn.allWhitespace) && (mottager.adresselinje1 && !mottager.adresselinje1.allWhitespace) && (mottager.postnummer && !mottager.postnummer.allWhitespace) && (mottager.poststed && !mottager.poststed.allWhitespace))
-    				assert (mottager.fil_navn && !mottager.fil_navn.allWhitespace)
-    				assert (mottager.land && !mottager.land.allWhitespace)
-
+    			if(testMottakersplitt){
+	    			print 'Mottakersplitt['
+	    			TestMottakersplitt(mottager)
+	    			println '] - OK'
     			}
-    			else if(mottager instanceof Organization) //def kunde_id,orgNumber,name,resultat
-    			{
-    				print 'b'
-    				assert (mottager.kunde_id  && !mottager.kunde_id.allWhitespace)
-    				assert (mottager.orgNumber  && !mottager.orgNumber.allWhitespace)
-    				assert (mottager.name  && !mottager.name.allWhitespace)
+    			if(testMasseutsendelse){
+	    			print 'Masseutsendelse['
+	    			TestMasseutsendelse(mottager)
+	    			println '] - OK'
     			}
-    			print ']'
 			}
 
-			println ''
-			println 'MottagerList.size == '+ mottagerList.size()
-	    	def mottakersplittXml = MakeMottakerSplittXML(mottagerList,config)
-	    	assert mottakersplittXml
-	    	WriteXML(Constants.JobDir+Constants.RequestFileNameMottakersplitt,mottakersplittXml)
-	    	def masseutsendelseXml = MakeMasseutsendelseWithPrint(mottagerList,config)
-        	assert masseutsendelseXml
-        	WriteXML(Constants.JobDir+Constants.RequestFileNameMasseutsendelse,masseutsendelseXml)
+			if(testMottakersplitt){
+		    	def mottakersplittXml = MakeMottakerSplittXML(mottagerList,config)
+		    	assert mottakersplittXml
+		    	WriteXML(Constants.JobDir+Constants.RequestFileNameMottakersplitt,mottakersplittXml)
+	    	}
+	    	if(testMasseutsendelse){
+		    	def masseutsendelseXml = MakeMasseutsendelseWithPrint(mottagerList,config)
+	        	assert masseutsendelseXml
+	        	WriteXML(Constants.JobDir+Constants.RequestFileNameMasseutsendelse,masseutsendelseXml)
+        	}
 			println '##############################################'
+    }
+
+    def TestMottakersplitt(def candidate){
+
+    	if(candidate instanceof Person) //def ssn,adresselinje1,postnummer,poststed,mobile,fil_navn,vedlegg_navn,kunde_id,fulltNavn,resultat,adresselinje2,land
+    	{
+    		print 'p'
+    		assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
+    		assert (candidate.ssn && !candidate.ssn.allWhitespace) || ((candidate?.fulltNavn && !candidate.fulltNavn.allWhitespace) && (candidate.adresselinje1 && !candidate.adresselinje1.allWhitespace) && (candidate.postnummer && !candidate.postnummer.allWhitespace) && (candidate.poststed && !candidate.poststed.allWhitespace))
+    		assert (candidate.ssn) || (candidate.land && !mottager.land.allWhitespace)
+    	}
+    	else if(candidate instanceof Organization) //def kunde_id,orgNumber,name,resultat
+		{
+			print 'b'
+			assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
+    		assert (candidate.orgNumber  && !candidate.orgNumber.allWhitespace)
+    		assert (candidate.name  && !candidate.name.allWhitespace)
+    		assert (candidate.land && !candidate.land.allWhitespace)
+		}
+    }
+
+    def TestMasseutsendelse(def candidate){
+
+    	if(candidate instanceof Person) //def ssn,adresselinje1,postnummer,poststed,mobile,fil_navn,vedlegg_navn,kunde_id,fulltNavn,resultat,adresselinje2,land
+    	{
+    		print 'p'
+    		assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
+    		assert (candidate.ssn && !candidate.ssn.allWhitespace) || ((candidate?.fulltNavn && !candidate.fulltNavn.allWhitespace) && (candidate.adresselinje1 && !candidate.adresselinje1.allWhitespace) && (candidate.postnummer && !candidate.postnummer.allWhitespace) && (candidate.poststed && !candidate.poststed.allWhitespace))
+    		assert (candidate.fil_navn && !candidate.fil_navn.allWhitespace)
+    		assert (candidate.ssn) || (candidate.land && !mottager.land.allWhitespace)
+    	}
+    	else if(candidate instanceof Organization) //def kunde_id,orgNumber,name,resultat
+		{
+			print 'b'
+			assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
+    		assert (candidate.orgNumber  && !candidate.orgNumber.allWhitespace)
+    		assert (candidate.name  && !candidate.name.allWhitespace)
+    		assert (candidate.fil_navn && !candidate.fil_navn.allWhitespace)
+    		assert (candidate.land && !candidate.land.allWhitespace)
+		}
     }
 
 
@@ -266,14 +319,20 @@ class Main extends Script {
 		def ReturPoststed =''
 	}
 
+
+	class Candidate{
+		def kunde_id,fil_navn,vedlegg_navn,resultat
+	}
+	@InheritConstructors
 	@ToString(includePackage = false,ignoreNulls = true,includeNames=true)
-	class Person {
-		def ssn,adresselinje1,postnummer,poststed,mobile,fil_navn,vedlegg_navn,kunde_id,fulltNavn,resultat,adresselinje2,land
+	class Person extends Candidate{
+		def ssn,adresselinje1,postnummer,poststed,mobile,fulltNavn,adresselinje2,land
 	}
 
+	@InheritConstructors
 	@ToString(ignoreNulls = true,includeNames=true)
-	class Organization {
-		def kunde_id,orgNumber,name,resultat
+	class Organization extends Candidate{
+		def orgNumber,name
 	}
 
 	class HDD {
@@ -347,8 +406,9 @@ class Main extends Script {
 		xml.mottakersplitt('xmlns':"http://www.digipost.no/xsd/avsender2_1",'xmlns:xsi':"http://www.w3.org/2001/XMLSchema-instance")
 		{
 		  "jobb-innstillinger"() {
-		  	"avsender-id"(config.Avsender_id);
-		  	"behandler-id"(config.Behandler_id);
+		  	"avsender-id"(config.Avsender_id)
+		  	if(config.Behandler_id)
+		  		"behandler-id"(config.Behandler_id)
 		  	"jobb-id"(UUID.randomUUID().toString())
 		  	"jobb-navn"(config.Jobb_navn);
 		  	"auto-godkjenn-jobb"(config.AutoGodkjennJobb)
@@ -359,7 +419,9 @@ class Main extends Script {
 		     		mottaker(){
 		     			if(m instanceof Person){
 				     		"kunde-id"(m.kunde_id)
-				     		if(m?.ssn?.length() == 11)
+				     		if(m?.ssn?.length() > 1 && m?.ssn?.length() < 11)
+				     			"foedselsnummer"(m.ssn.padLeft(11,'0'))
+				     		else if (m?.ssn?.length() == 11)
 				     			"foedselsnummer"(m.ssn)
 				     		else{
 				     			"navn"(){
@@ -397,12 +459,13 @@ class Main extends Script {
 		xml.'masseutsendelse'('xmlns':'http://www.digipost.no/xsd/avsender2_1','xmlns:xsi':'http://www.w3.org/2001/XMLSchema-instance')
 		{
 		  "jobb-innstillinger"() {
-		  	"avsender-id"(config.Avsender_id);
-		  	"behandler-id"(config.Behandler_id);
-		  	"jobb-id"(UUID.randomUUID().toString());
-		  	"jobb-navn"(config.Jobb_navn);
-		  	"auto-godkjenn-jobb"(config.AutoGodkjennJobb);
-		  	"klientinformasjon"('Manual');
+		  	"avsender-id"(config.Avsender_id)
+		  	if(config.Behandler_id)
+		  		"behandler-id"(config.Behandler_id)
+		  	"jobb-id"(UUID.randomUUID().toString())
+		  	"jobb-navn"(config.Jobb_navn)
+		  	"auto-godkjenn-jobb"(config.AutoGodkjennJobb)
+		  	"klientinformasjon"('Manual')
 		  }
 		  "standard-distribusjon"() {
 		  	  "felles-innstillinger"(){
