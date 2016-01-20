@@ -15,7 +15,7 @@ class Main extends Script {
 	enum JobType{MOTTAKERSPLITT,MASSEUTSENDELSE}
 
 	static class Constants{
-		static CsvHeader= 'Kunde ID;Fødsels- og personnummer;Fullt navn, fornavn først;Adresselinje;Postnummer;Poststed;Mobil;Filnavn;Organisasjonsnummer(hvis bedrift);Land'
+		static CsvHeader= 'Kunde ID;Fødsels- og personnummer;Fullt navn, fornavn først;Adresselinje;Adresselinje 2;Adresselinje 3;Postnummer;Poststed;Mobil;Filnavn;Organisasjonsnummer(hvis bedrift);Land'
 		static BasePath = './Digipost/'
 		static Csv_delimeter = ';'
 		static Encoding = 'UTF-8'
@@ -109,11 +109,11 @@ class Main extends Script {
     def HelpText(){
     		println 'Usage::'
     		println '* Mottakersplitt'
-    		println '   -init (Creates folder structure). Example[groovy Mottakersplitt.groovy -init]'
-    		println '   -clean (Deletes folder structure). Example[groovy Mottakersplitt.groovy -clean]'
-    		println '   -test (Test to see if the program can parse the source.csv and build mottager/masseutsendelse -xml). Example[groovy Mottakersplitt.groovy -test]'
-    		println '   -mottakersplitt (Creates mottakersplitt shipment, based on your source.csv). Example[groovy Mottakersplitt.groovy -mottakersplitt]'
-    		println '   -masseutsendelse (Creates mottakersplitt shipment, based on your source.csv). Example[groovy Mottakersplitt.groovy -mottakersplitt]'
+    		println '   -init (Creates folder structure). Example[groovy DigipostBatch.groovy -init]'
+    		println '   -clean (Deletes genereated files). Example[groovy DigipostBatch.groovy -clean][groovy DigipostBatch.groovy -clean all](Deletes the whole folderstructure)'
+    		println '   -test (Test to see if the program can parse the source.csv and build mottager/masseutsendelse -xml). Example[groovy DigipostBatch.groovy -test][groovy DigipostBatch.groovy -test mottakersplitt][groovy DigipostBatch.groovy -test masseutsendelse]'
+    		println '   -mottakersplitt (Creates mottakersplitt shipment, based on your source.csv). Example[groovy DigipostBatch.groovy -mottakersplitt]'
+    		println '   -masseutsendelse (Creates mottakersplitt shipment, based on your source.csv). Example[groovy DigipostBatch.groovy -masseutsendelse]'
     }
 
     def Test(Config config,Boolean testMottakersplitt,Boolean testMasseutsendelse){
@@ -358,11 +358,11 @@ class Main extends Script {
 		  		skip = false
 		  		
 		  	}
-		  	//'Kunde ID;Fødsels- og personnummer;Fullt navn, fornavn først;Adresselinje;Postnummer;Poststed;Mobil;Filnavn;Organisasjonsnummer(hvis bedrift);Land'
+		  	//'Kunde ID;Fødsels- og personnummer;Fullt navn, fornavn først;Adresselinje;Adresselinje 2;Adresselinje 3;Postnummer;Poststed;Mobil;Filnavn;Organisasjonsnummer(hvis bedrift);Land'
 		  	else if(fields[8]){
 				def virksomhet = new Organization(
 					kunde_id:fields[0],
-					orgNumber: fields[8],
+					orgNumber: fields[10],
 					name:fields[2]
 					)
 				mottagerList << virksomhet
@@ -373,11 +373,13 @@ class Main extends Script {
 					ssn:fields[1],
 					fulltNavn:fields[2],
 					adresselinje1:fields[3],
-					postnummer:fields[4],
-					poststed:fields[5],
-					mobil:fields[6],
-					fil_navn:fields[7],
-					land:fields[9]
+					adresselinje2:fields[4],
+					adresselinje3:fields[5],
+					postnummer:fields[6],
+					poststed:fields[7],
+					mobil:fields[8],
+					fil_navn:fields[9],
+					land:fields[11]
 				)
 				mottagerList << person
 			}
@@ -490,8 +492,10 @@ class Main extends Script {
 			  			if(config.FallbackToPrint){
 				  			"brev"('xsi:type':'brev-med-print'){
 				  				"mottaker"(){
-				  					"kunde-id"(m.kunde_id);
-				  					if(m.ssn != null && m.ssn.length() == 11)
+				  					"kunde-id"(m.kunde_id)
+				  					if(m?.ssn?.length() > 1 && m?.ssn?.length() < 11)
+				     					"foedselsnummer"(m.ssn.padLeft(11,'0'))
+				     				else if (m?.ssn?.length() == 11)
 				     					"foedselsnummer"(m.ssn)
 				     				else{
 					    	 			"navn"(){
@@ -502,6 +506,10 @@ class Main extends Script {
 					    	 			"adresse"(){
 							     			"adresse-format1"(){
 							     				"adresselinje1"(m.adresselinje1)
+							     				if("adresselinje2" != null)
+							     					"adresselinje2"(m.adresselinje2)
+							     				if("adresselinje3" != null)
+							     					"adresselinje3"(m.adresselinje3)
 							     				"postnummer"(m.postnummer.padLeft(4,'0'))
 							     				"poststed"(m.poststed)
 							     			}
@@ -515,6 +523,10 @@ class Main extends Script {
 							  			if(m.land == null || m.land == 'NORWAY'){
 								  			"norsk-mottakeradresse"{
 								  				"adresselinje1"(m.adresselinje1)
+							     				if("adresselinje2" != null)
+							     					"adresselinje2"(m.adresselinje2)
+							     				if("adresselinje3" != null)
+							     					"adresselinje3"(m.adresselinje3)
 								  				"postnummer"(m.postnummer.padLeft(4,'0'))
 								  				"poststed"(m.poststed)
 								  			}
@@ -522,6 +534,10 @@ class Main extends Script {
 							  			else{
 							  				"utenlandsk-mottakeradresse"{
 				        	                	"adresselinje1"(m.adresselinje1)
+							     				if("adresselinje2" != null)
+							     					"adresselinje2"(m.adresselinje2)
+							     				if("adresselinje3" != null)
+							     					"adresselinje3"(m.adresselinje3)
 				        	                	"land"(m.land)
 			            	            	}
 							  			}
@@ -538,7 +554,9 @@ class Main extends Script {
 			  				"brev"(){
 				  				"mottaker"(){
 				  					"kunde-id"(m.kunde_id);
-				  					if(m.ssn != null && m.ssn.length() == 11)
+				  					if(m?.ssn?.length() > 1 && m?.ssn?.length() < 11)
+				     					"foedselsnummer"(m.ssn.padLeft(11,'0'))
+				     				else if (m?.ssn?.length() == 11)
 				     					"foedselsnummer"(m.ssn)
 				     				else{
 					    	 			"navn"(){
