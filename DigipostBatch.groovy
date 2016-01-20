@@ -100,10 +100,39 @@ class Main extends Script {
 			CleanGeneratedFiles()
 			Test(config,shouldTestMottakersplitt,shouldTestMasseutsendelse)
 		}
+		else if (args[0] == '-report' && args[1] == 'masseutsendelse')
+		{
+			Config config = HDD.load(Constants.ConfigFile)
+			makeReport(config,JobType.MASSEUTSENDELSE)
+		}
+
+		else if (args[0] == '-report' && args[1] == 'mottakersplitt')
+		{
+			Config config = HDD.load(Constants.ConfigFile)
+			makeReport(config,JobType.MOTTAKERSPLITT)
+		}
 		else{
 			HelpText()
 		}
 
+    }
+
+    def makeReport(Config config,JobType jobtype){
+    		def mottagerList = PopulateMottagerListFromSourceCSV(true)
+    		println 'Checking for receipt'
+			CheckForReceipt(config,jobtype)
+			println 'Unzipping result files'
+			UnzipFiles(jobtype)
+			println 'Populating result map'
+			def resultat = PopulateResultMapFromResult(jobtype)
+			println('Count source['+mottagerList.size()+'], count result['+resultat.size()+']')
+			AggregateResult(resultat)
+			println 'Updating candidates based on result'
+			UpdateCandidateWithResult(mottagerList,resultat)
+			println 'Make CSV Report'
+			MakeCSVReport(mottagerList,jobtype)
+			println 'Done!'
+			println '##############################################'
     }
 
     def HelpText(){
@@ -506,9 +535,9 @@ class Main extends Script {
 					    	 			"adresse"(){
 							     			"adresse-format1"(){
 							     				"adresselinje1"(m.adresselinje1)
-							     				if("adresselinje2" != null)
+							     				if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
 							     					"adresselinje2"(m.adresselinje2)
-							     				if("adresselinje3" != null)
+							     				if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
 							     					"adresselinje3"(m.adresselinje3)
 							     				"postnummer"(m.postnummer.padLeft(4,'0'))
 							     				"poststed"(m.poststed)
@@ -523,9 +552,9 @@ class Main extends Script {
 							  			if(m.land == null || m.land == 'NORWAY'){
 								  			"norsk-mottakeradresse"{
 								  				"adresselinje1"(m.adresselinje1)
-							     				if("adresselinje2" != null)
+							     				if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
 							     					"adresselinje2"(m.adresselinje2)
-							     				if("adresselinje3" != null)
+							     				if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
 							     					"adresselinje3"(m.adresselinje3)
 								  				"postnummer"(m.postnummer.padLeft(4,'0'))
 								  				"poststed"(m.poststed)
@@ -534,9 +563,9 @@ class Main extends Script {
 							  			else{
 							  				"utenlandsk-mottakeradresse"{
 				        	                	"adresselinje1"(m.adresselinje1)
-							     				if("adresselinje2" != null)
+							     				if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
 							     					"adresselinje2"(m.adresselinje2)
-							     				if("adresselinje3" != null)
+							     				if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
 							     					"adresselinje3"(m.adresselinje3)
 				        	                	"land"(m.land)
 			            	            	}
