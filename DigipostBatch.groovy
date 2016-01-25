@@ -15,7 +15,7 @@ class Main extends Script {
 	enum JobType{MOTTAKERSPLITT,MASSEUTSENDELSE}
 
 	static class Constants{
-		static CsvHeader= 'Kunde ID;Fødsels- og personnummer;Fullt navn, fornavn først;Adresselinje;Adresselinje 2;Adresselinje 3;Postnummer;Poststed;Mobil;Filnavn;Organisasjonsnummer(hvis bedrift);Land'
+		static CsvHeader= 'Kunde ID;Fødsels- og personnummer;Fullt navn, fornavn først;Adresselinje;Adresselinje 2;Adresselinje 3;Postnummer;Poststed;Mobil;Filnavn;Organisasjonsnummer(hvis bedrift);Land;kid;kontonummer;beløp;forfallsdato'
 		static BasePath = './Digipost/'
 		static Csv_delimeter = ';'
 		static Encoding = 'UTF-8'
@@ -350,11 +350,18 @@ class Main extends Script {
 
 	class Candidate{
 		def kunde_id,fil_navn,vedlegg_navn,resultat
+		Faktura faktura = null
 	}
 	@InheritConstructors
 	@ToString(includePackage = false,ignoreNulls = true,includeNames=true)
 	class Person extends Candidate{
 		def ssn,adresselinje1,postnummer,poststed,mobile,fulltNavn,adresselinje2,land
+	}
+
+	@InheritConstructors
+	@ToString(includePackage = false,ignoreNulls = true,includeNames=true)
+	class Faktura{
+		def kid,beloep,kontonummer,forfallsdato
 	}
 
 	@InheritConstructors
@@ -388,12 +395,22 @@ class Main extends Script {
 		  		
 		  	}
 		  	//'Kunde ID;Fødsels- og personnummer;Fullt navn, fornavn først;Adresselinje;Adresselinje 2;Adresselinje 3;Postnummer;Poststed;Mobil;Filnavn;Organisasjonsnummer(hvis bedrift);Land'
-		  	else if(fields[8]){
+		  	else if(fields[10]){
 				def virksomhet = new Organization(
 					kunde_id:fields[0],
 					orgNumber: fields[10],
-					name:fields[2]
+					name:fields[2],
+					land:fields[11]
 					)
+				if(fields[12] != null && fields[12].length() > 1){ //kid;kontonummer;beløp;forfall
+					def faktura = new Faktura(
+						kid:fields[12],
+						kontonummer:fields[13],
+						beloep:fields[14],
+						forfallsdato:fields[15]
+					)
+					virksomhet.faktura = faktura
+				}
 				mottagerList << virksomhet
 			}
 		  	else {
@@ -410,6 +427,15 @@ class Main extends Script {
 					fil_navn:fields[9],
 					land:fields[11]
 				)
+				if(fields[12] != null && fields[12].length() > 1){ //kid;kontonummer;beløp;forfall
+					def faktura = new Faktura(
+						kid:fields[12],
+						kontonummer:fields[13],
+						beloep:fields[14],
+						forfallsdato:fields[15]
+					)
+					person.faktura = faktura
+				}
 				mottagerList << person
 			}
 
@@ -421,10 +447,10 @@ class Main extends Script {
 	{
 		def file  = new File(Constants.SourcePath+"ExampleFormat.csv")
 		file << Constants.CsvHeader+'\n'
-		file << '01;;Ola Normann;Vegen 1;0001;Oslo;;01.pdf;;Norway'+'\n'//By name and address
-		file << '02;;Åke Svenske;Gatan 1;0001;Stockholm;;02.pdf;;Sweden'+'\n'//By name and address
-		file << '03;31108412312;;;;;;03.pdf;;Norway'+'\n'//By SSN
-		file << '04;;;;;;;04.pdf;123123;Norway'+'\n'//Bedrift
+		file << '01;;Ola Normann;Vegen 1;0001;Oslo;;01.pdf;;Norway;12345678456789013;70500570650;13;2016-02-16'+'\n'//By name and address
+		file << '02;;Åke Svenske;Gatan 1;0001;Stockholm;;02.pdf;;Sweden;;;;'+'\n'//By name and address
+		file << '03;31108412312;;;;;;03.pdf;;Norway;;;;'+'\n'//By SSN
+		file << '04;;;;;;;04.pdf;123123;Norway;;;;'+'\n'//Bedrift
 
 	}
 
@@ -505,12 +531,28 @@ class Main extends Script {
 			  }
 			  "post"(){
 			  	for(def m : mottagerList){
-			  		"dokument"(){
-			  			"id"("id_"+m.kunde_id);
-			  			"fil"(m.fil_navn)
-			  			"innstillinger"(){
-				  			"emne"(config.emne)
+			  		if(m.faktura != null){
+			  			"dokument"('xsi:type':'faktura'){
+				  			"id"("id_"+m.kunde_id);
+				  			"fil"(m.fil_navn)
+				  			"innstillinger"(){
+					  			"emne"(config.emne)
+					  		}
+				  			"kid"(m.faktura.kid);
+			  				"beloep"(m.faktura.beloep)
+			  				"kontonummer"(m.faktura.kontonummer)
+			  				"forfallsdato"(m.faktura.forfallsdato)
+			  			}
+			  		}
+			  		else{
+			  			"dokument"(){
+				  			"id"("id_"+m.kunde_id);
+				  			"fil"(m.fil_navn)
+				  			"innstillinger"(){
+					  			"emne"(config.emne)
+					  		}
 				  		}
+
 			  		}
 			  	}
 			  }
