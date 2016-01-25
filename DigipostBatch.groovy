@@ -191,7 +191,7 @@ class Main extends Script {
 			print 'b'
 			assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
     		assert (candidate.orgNumber  && !candidate.orgNumber.allWhitespace)
-    		assert (candidate.name  && !candidate.name.allWhitespace)
+    		assert (candidate.fulltNavn  && !candidate.fulltNavn.allWhitespace)
     		assert (candidate.land && !candidate.land.allWhitespace)
 		}
     }
@@ -211,7 +211,7 @@ class Main extends Script {
 			print 'b'
 			assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
     		assert (candidate.orgNumber  && !candidate.orgNumber.allWhitespace)
-    		assert (candidate.name  && !candidate.name.allWhitespace)
+    		assert (candidate.fulltNavn  && !candidate.fulltNavn.allWhitespace)
     		assert (candidate.fil_navn && !candidate.fil_navn.allWhitespace)
     		assert (candidate.land && !candidate.land.allWhitespace)
 		}
@@ -349,13 +349,13 @@ class Main extends Script {
 
 
 	class Candidate{
-		def kunde_id,fil_navn,vedlegg_navn,resultat
+		def kunde_id,fulltNavn,fil_navn,mobile,vedlegg_navn,adresselinje1,adresselinje2,adresselinje3,postnummer,poststed,land,resultat
 		Faktura faktura = null
 	}
 	@InheritConstructors
 	@ToString(includePackage = false,ignoreNulls = true,includeNames=true)
 	class Person extends Candidate{
-		def ssn,adresselinje1,postnummer,poststed,mobile,fulltNavn,adresselinje2,land
+		def ssn
 	}
 
 	@InheritConstructors
@@ -367,7 +367,7 @@ class Main extends Script {
 	@InheritConstructors
 	@ToString(ignoreNulls = true,includeNames=true)
 	class Organization extends Candidate{
-		def orgNumber,name
+		def orgNumber
 	}
 
 	class HDD {
@@ -397,17 +397,23 @@ class Main extends Script {
 		  	//'Kunde ID;Fødsels- og personnummer;Fullt navn, fornavn først;Adresselinje;Adresselinje 2;Adresselinje 3;Postnummer;Poststed;Mobil;Filnavn;Organisasjonsnummer(hvis bedrift);Land'
 		  	else if(fields[10]){
 				def virksomhet = new Organization(
-					kunde_id:fields[0],
-					orgNumber: fields[10],
-					name:fields[2],
-					land:fields[11]
+					kunde_id:fields[0].trim(),
+					orgNumber: fields[10].trim(),
+					fulltNavn:fields[2].trim(),
+					adresselinje1:fields[3].trim(),
+					adresselinje2:fields[4].trim(),
+					adresselinje3:fields[5].trim(),
+					postnummer:fields[6].trim(),
+					poststed:fields[7].trim(),
+					land:fields[11].trim(),
+					fil_navn:fields[9].trim(),
 					)
 				if(fields[12] != null && fields[12].length() > 1){ //kid;kontonummer;beløp;forfall
 					def faktura = new Faktura(
-						kid:fields[12],
-						kontonummer:fields[13],
-						beloep:fields[14],
-						forfallsdato:fields[15]
+						kid:fields[12].trim(),
+						kontonummer:fields[13].trim(),
+						beloep:fields[14].trim(),
+						forfallsdato:fields[15].trim()
 					)
 					virksomhet.faktura = faktura
 				}
@@ -415,24 +421,24 @@ class Main extends Script {
 			}
 		  	else {
 				def person = new Person(
-					kunde_id:fields[0],
-					ssn:fields[1],
-					fulltNavn:fields[2],
-					adresselinje1:fields[3],
-					adresselinje2:fields[4],
-					adresselinje3:fields[5],
-					postnummer:fields[6],
-					poststed:fields[7],
-					mobil:fields[8],
-					fil_navn:fields[9],
-					land:fields[11]
+					kunde_id:fields[0].trim(),
+					ssn:fields[1].trim(),
+					fulltNavn:fields[2].trim(),
+					adresselinje1:fields[3].trim(),
+					adresselinje2:fields[4].trim(),
+					adresselinje3:fields[5].trim(),
+					postnummer:fields[6].trim(),
+					poststed:fields[7].trim(),
+					mobil:fields[8].trim(),
+					fil_navn:fields[9].trim(),
+					land:fields[11].trim()
 				)
 				if(fields[12] != null && fields[12].length() > 1){ //kid;kontonummer;beløp;forfall
 					def faktura = new Faktura(
-						kid:fields[12],
-						kontonummer:fields[13],
-						beloep:fields[14],
-						forfallsdato:fields[15]
+						kid:fields[12].trim(),
+						kontonummer:fields[13].trim(),
+						beloep:fields[14].trim(),
+						forfallsdato:fields[15].trim()
 					)
 					person.faktura = faktura
 				}
@@ -488,7 +494,7 @@ class Main extends Script {
 					     		"adresse"(){
 					     			"adresse-format1"(){
 					     				"adresselinje1"(m.adresselinje1)
-					     				"postnummer"(m.postnummer.padLeft(4,'0'))
+					     				"postnummer"(m?.postnummer?.padLeft(4,'0'))
 					     				"poststed"(m.poststed)
 					     			}
 					     		}
@@ -558,97 +564,105 @@ class Main extends Script {
 			  }
 			  "forsendelser"(){
 			  	for(def m : mottagerList){
-			  		if(m instanceof Person){
-			  			def postType=''
-			  			if(config.FallbackToPrint){
-				  			"brev"('xsi:type':'brev-med-print'){
-				  				"mottaker"(){
-				  					"kunde-id"(m.kunde_id)
-				  					if(m?.ssn?.length() > 1 && m?.ssn?.length() < 11)
-				     					"foedselsnummer"(m.ssn.padLeft(11,'0'))
-				     				else if (m?.ssn?.length() == 11)
-				     					"foedselsnummer"(m.ssn)
-				     				else{
+			  		def postType=''
+			  		if(config.FallbackToPrint){
+				  		"brev"('xsi:type':'brev-med-print'){
+				  			"mottaker"(){
+				  				"kunde-id"(m.kunde_id)
+				  				if(m instanceof Person){
+					  				if(m?.ssn?.length() > 1 && m?.ssn?.length() < 11)
+					    					"foedselsnummer"(m.ssn.padLeft(11,'0'))
+					    				else if (m?.ssn?.length() == 11)
+					    					"foedselsnummer"(m.ssn)
+					    				else{
 					    	 			"navn"(){
 							     			"navn-format1"(){
 							     				"fullt-navn-fornavn-foerst"(m.fulltNavn)
 							     			}
 					    	 			}
 					    	 			"adresse"(){
-							     			"adresse-format1"(){
-							     				"adresselinje1"(m.adresselinje1)
-							     				if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
-							     					"adresselinje2"(m.adresselinje2)
-							     				if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
-							     					"adresselinje3"(m.adresselinje3)
-							     				"postnummer"(m.postnummer.padLeft(4,'0'))
-							     				"poststed"(m.poststed)
-							     			}
+								     		"adresse-format1"(){
+								     			"adresselinje1"(m.adresselinje1)
+								   				if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
+								  					"adresselinje2"(m.adresselinje2)
+								 				if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
+								     				"adresselinje3"(m.adresselinje3)
+								     			"postnummer"(m.postnummer.padLeft(4,'0'))
+								     			"poststed"(m.poststed)
+								     		}
 					    	 			}
-				     				}
-				  					
-				  				}
-					  			"hoveddokument"("uuid":UUID.randomUUID().toString(),"refid":"id_"+m.kunde_id)
-							  		"fysisk-print"(){
-							  			"postmottaker"(m.fulltNavn);
-							  			if(m.land == null || m.land == 'NORWAY'){
-								  			"norsk-mottakeradresse"{
-								  				"adresselinje1"(m.adresselinje1)
-							     				if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
-							     					"adresselinje2"(m.adresselinje2)
-							     				if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
-							     					"adresselinje3"(m.adresselinje3)
-								  				"postnummer"(m.postnummer.padLeft(4,'0'))
-								  				"poststed"(m.poststed)
-								  			}
-							  			}
-							  			else{
-							  				"utenlandsk-mottakeradresse"{
-				        	                	"adresselinje1"(m.adresselinje1)
-							     				if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
-							     					"adresselinje2"(m.adresselinje2)
-							     				if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
-							     					"adresselinje3"(m.adresselinje3)
-				        	                	"land"(m.land)
-			            	            	}
-							  			}
-							  			"retur-postmottaker"(config.ReturPostmottaker)
-							  			"norsk-returadresse"{
-							  				"adresselinje1"(config.ReturAdresse)
-							  				"postnummer"(config.ReturPostnummer)
-							  				"poststed"(config.ReturPoststed)
-							  			}
+					    	 		}
+				     			}
+				     			else if(m instanceof Organization){
+					  				"organisasjonsnummer"(m.orgNumber)
+					    			}
+				     		}
+				  		
+					  	"hoveddokument"("uuid":UUID.randomUUID().toString(),"refid":"id_"+m.kunde_id)
+						  	"fysisk-print"(){
+						  		"postmottaker"(m.fulltNavn);
+						  		if(m.land == null || m.land == 'NORWAY'){
+							  		"norsk-mottakeradresse"{
+							  			"adresselinje1"(m.adresselinje1)
+						     			if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
+						     				"adresselinje2"(m.adresselinje2)
+						     			if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
+						     				"adresselinje3"(m.adresselinje3)
+							  			"postnummer"(m?.postnummer?.padLeft(4,'0'))
+							  			"poststed"(m.poststed)
 							  		}
+						  		}
+						  		else{
+						  			"utenlandsk-mottakeradresse"{
+				       	               	"adresselinje1"(m.adresselinje1)
+						     			if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
+						     				"adresselinje2"(m.adresselinje2)
+						     			if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
+						     				"adresselinje3"(m.adresselinje3)
+				       	               	"land"(m.land)
+			           	           	}
+						  		}
+						  		"retur-postmottaker"(config.ReturPostmottaker)
+						  		"norsk-returadresse"{
+						  			"adresselinje1"(config.ReturAdresse)
+						  			"postnummer"(config.ReturPostnummer)
+						  			"poststed"(config.ReturPoststed)
+						  		}
+						  	}
+						}
+				  	}			  	
+			  		else{
+			  			"brev"(){
+				  			"mottaker"(){
+				  				"kunde-id"(m.kunde_id)
+				  				if(m instanceof Person){
+				  				if(m?.ssn?.length() > 1 && m?.ssn?.length() < 11)
+				     				"foedselsnummer"(m.ssn.padLeft(11,'0'))
+				     			else if (m?.ssn?.length() == 11)
+				     				"foedselsnummer"(m.ssn)
+				     			else{
+					   	 			"navn"(){
+						     			"navn-format1"(){
+						     				"fullt-navn-fornavn-foerst"(m.fulltNavn)
+						     			}
+					   	 			}
+					   	 			"adresse"(){
+						     			"adresse-format1"(){
+						     				"adresselinje1"(m.adresselinje1)
+						     				"postnummer"(m.postnummer).padLeft(4,'0')
+						     				"poststed"(m.poststed)
+						     			}
+					   	 			}
+				     			}
+				     			}
+				     			else if(m instanceof Organization){
+					  				"organisasjonsnummer"(m.orgNumber)
+					    		}
 				  			}
-			  			}
-			  			else{
-			  				"brev"(){
-				  				"mottaker"(){
-				  					"kunde-id"(m.kunde_id);
-				  					if(m?.ssn?.length() > 1 && m?.ssn?.length() < 11)
-				     					"foedselsnummer"(m.ssn.padLeft(11,'0'))
-				     				else if (m?.ssn?.length() == 11)
-				     					"foedselsnummer"(m.ssn)
-				     				else{
-					    	 			"navn"(){
-							     			"navn-format1"(){
-							     				"fullt-navn-fornavn-foerst"(m.fulltNavn)
-							     			}
-					    	 			}
-					    	 			"adresse"(){
-							     			"adresse-format1"(){
-							     				"adresselinje1"(m.adresselinje1)
-							     				"postnummer"(m.postnummer).padLeft(4,'0')
-							     				"poststed"(m.poststed)
-							     			}
-					    	 			}
-				     				}
-				  					
-				  				}
-					  			"hoveddokument"("uuid":UUID.randomUUID().toString(),"refid":"id_"+m.kunde_id)
-				  			}
-			  			}
+					  		"hoveddokument"("uuid":UUID.randomUUID().toString(),"refid":"id_"+m.kunde_id)
+				  		}
 			  		}
+			  		
 			  	}
 			  }
 			}
@@ -949,38 +963,43 @@ class Main extends Script {
 		}
 		   
 		digipostFile.append(Constants.CsvHeader+';Resultat\n',Constants.Encoding)
-			
+	
 		for(int i =0;i<candidates.size();i++){
+			def result = "";
+			result+=candidates.get(i).kunde_id+Constants.Csv_delimeter
 			if(candidates.get(i) instanceof Person){
-				digipostFile.append(
-					candidates.get(i).kunde_id+Constants.Csv_delimeter+
-					candidates.get(i).ssn+Constants.Csv_delimeter+
-					candidates.get(i).fulltNavn+Constants.Csv_delimeter+
-					candidates.get(i).adresselinje1+Constants.Csv_delimeter+
-					candidates.get(i).postnummer+Constants.Csv_delimeter+
-					candidates.get(i).poststed+Constants.Csv_delimeter+
-					candidates.get(i).mobile+Constants.Csv_delimeter+
-					candidates.get(i).fil_navn+Constants.Csv_delimeter+
-					Constants.Csv_delimeter+//orgnummer
-					candidates.get(i).land+Constants.Csv_delimeter+
-					candidates.get(i).resultat+'\n'
-				,Constants.Encoding)
-			 }
-			 else if(candidates.get(i) instanceof Organization){
-			 	digipostFile.append(
-					candidates.get(i).kunde_id+Constants.Csv_delimeter+
-					Constants.Csv_delimeter+//ssn
-					candidates.get(i).name+Constants.Csv_delimeter+
-					Constants.Csv_delimeter+//adresselinje
-					Constants.Csv_delimeter+//postnummer
-					Constants.Csv_delimeter+//poststed
-					Constants.Csv_delimeter+//mobile
-					Constants.Csv_delimeter+//filnavn
-					candidates.get(i).orgNumber+Constants.Csv_delimeter+
-					Constants.Csv_delimeter+//land
-					candidates.get(i).resultat+'\n'
-				,Constants.Encoding)
-		 	}
+				result+=candidates.get(i).ssn+Constants.Csv_delimeter
+			}
+			else{
+				result+=Constants.Csv_delimeter
+			}
+			result+=candidates.get(i).fulltNavn+Constants.Csv_delimeter
+			result+=candidates.get(i).adresselinje1+Constants.Csv_delimeter
+			result+=candidates.get(i).adresselinje2+Constants.Csv_delimeter
+			result+=candidates.get(i).adresselinje3+Constants.Csv_delimeter
+			result+=candidates.get(i).postnummer+Constants.Csv_delimeter
+			result+=candidates.get(i).poststed+Constants.Csv_delimeter
+			result+=candidates.get(i).mobile+Constants.Csv_delimeter
+			result+=candidates.get(i).fil_navn+Constants.Csv_delimeter
+			if(candidates.get(i) instanceof Organization){
+				result+=candidates.get(i).orgNumber+Constants.Csv_delimeter
+			}
+			else{
+				result+=Constants.Csv_delimeter
+			}
+			result+=candidates.get(i).land+Constants.Csv_delimeter
+			if(candidates.get(i).faktura != null){
+				result+=candidates.get(i).faktura.kid+Constants.Csv_delimeter
+				result+=candidates.get(i).faktura.kontonummer+Constants.Csv_delimeter
+				result+=candidates.get(i).faktura.beloep+Constants.Csv_delimeter
+				result+=candidates.get(i).faktura.forfallsdato+Constants.Csv_delimeter
+			}
+			else{
+				result+=Constants.Csv_delimeter+Constants.Csv_delimeter+Constants.Csv_delimeter+Constants.Csv_delimeter
+			}
+			result+=candidates.get(i).resultat+'\n'
+			
+			digipostFile.append(result,Constants.Encoding)
 		}
 	}
 }
