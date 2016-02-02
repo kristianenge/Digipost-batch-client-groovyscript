@@ -15,7 +15,28 @@ class Main extends Script {
 	enum JobType{MOTTAKERSPLITT,MASSEUTSENDELSE}
 
 	static class Constants{
-		static CsvHeader= 'Kunde ID;Fødsels- og personnummer;Fullt navn, fornavn først;Adresselinje;Adresselinje 2;Adresselinje 3;Postnummer;Poststed;Mobil;Filnavn;Organisasjonsnummer(hvis bedrift);Land;kid;kontonummer;beløp;forfallsdato'
+		static CsvHeader= 'Kunde ID;Fødsels- og personnummer;Fullt navn, fornavn først;Adresselinje;Adresselinje 2;Postnummer;Poststed;Mobil;Emne;Filnavn;Vedlegg;Organisasjonsnummer(hvis bedrift);Land;kid;kontonummer;beløp;forfallsdato'
+		static def
+		kunde_id_plass = 0,
+		foedselsnummer_plass = 1,
+		fullt_navn_plass = 2,
+		adresselinje1_plass = 3,
+		adresselinje2_plass = 4,
+		postnummer_plass = 5,
+		poststed_plass = 6,
+		mobil_plass = 7,
+		emne_plass = 8,
+		filnavn_plass = 9,
+		vedlegg_plass = 10,
+		orgnummer_plass = 11,
+		land_plass = 12,
+		kid_plass = 13,
+		kontonummer_plass = 14,
+		beloep_plass = 15,
+		forfallsdato_plass = 16
+		
+
+
 		static BasePath = './Digipost/'
 		static Csv_delimeter = ';'
 		static Encoding = 'UTF-8'
@@ -112,6 +133,7 @@ class Main extends Script {
 			makeReport(config,JobType.MOTTAKERSPLITT)
 		}
 		else{
+			GenerateCSVExample()
 			HelpText()
 		}
 
@@ -149,6 +171,8 @@ class Main extends Script {
     	println '############-=Test=-###############'
     	println '[p] == person, [b] == bedrift'
         	def mottagerList = PopulateMottagerListFromSourceCSV(true)
+        	def dokumentList = PopulateDokumentList(true)
+			dokumentList.each{ k, v -> println "${k}:${v}" }
         	assert mottagerList.size() > 0
         	
         	mottagerList.each { mottager ->
@@ -170,7 +194,7 @@ class Main extends Script {
 		    	WriteXML(Constants.JobDir+Constants.RequestFileNameMottakersplitt,mottakersplittXml)
 	    	}
 	    	if(testMasseutsendelse){
-		    	def masseutsendelseXml = MakeMasseutsendelseWithPrint(mottagerList,config)
+		    	def masseutsendelseXml = MakeMasseutsendelseWithPrint(mottagerList,dokumentList,config)
 	        	assert masseutsendelseXml
 	        	WriteXML(Constants.JobDir+Constants.RequestFileNameMasseutsendelse,masseutsendelseXml)
         	}
@@ -184,7 +208,7 @@ class Main extends Script {
     		print 'p'
     		assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
     		assert (candidate.ssn && !candidate.ssn.allWhitespace) || ((candidate?.fulltNavn && !candidate.fulltNavn.allWhitespace) && (candidate.adresselinje1 && !candidate.adresselinje1.allWhitespace) && (candidate.postnummer && !candidate.postnummer.allWhitespace) && (candidate.poststed && !candidate.poststed.allWhitespace))
-    		assert (candidate.ssn) || (candidate.land && !mottager.land.allWhitespace)
+    		assert (candidate.ssn) || (candidate.land && !candidate.land.allWhitespace)
     	}
     	else if(candidate instanceof Organization) //def kunde_id,orgNumber,name,resultat
 		{
@@ -204,7 +228,7 @@ class Main extends Script {
     		assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
     		assert (candidate.ssn && !candidate.ssn.allWhitespace) || ((candidate?.fulltNavn && !candidate.fulltNavn.allWhitespace) && (candidate.adresselinje1 && !candidate.adresselinje1.allWhitespace) && (candidate.postnummer && !candidate.postnummer.allWhitespace) && (candidate.poststed && !candidate.poststed.allWhitespace))
     		assert (candidate.fil_navn && !candidate.fil_navn.allWhitespace)
-    		assert (candidate.ssn) || (candidate.land && !mottager.land.allWhitespace)
+    		assert (candidate.ssn) || (candidate.land && !candidate.land.allWhitespace)
     	}
     	else if(candidate instanceof Organization) //def kunde_id,orgNumber,name,resultat
 		{
@@ -271,8 +295,11 @@ class Main extends Script {
 				println('personList size: '+mottagerList.size())
 				println('NO recievers.. check '+Constants.SourcePath+Constants.SourceFile+'.')
 			}
+
+			def dokumentList = PopulateDokumentList(true)
+			dokumentList.each{ k, v -> println "${k}:${v}" }
         	println 'Make Masseutsendelse XML'
-        	def xml = MakeMasseutsendelseWithPrint(mottagerList,config)
+        	def xml = MakeMasseutsendelseWithPrint(mottagerList,dokumentList,config)
         	println 'Write XML'
         	WriteXML(Constants.JobDir+Constants.RequestFileNameMasseutsendelse,xml)
 			println 'Moving PDFs to Job dir'
@@ -347,6 +374,10 @@ class Main extends Script {
 		def ReturPoststed =''
 	}
 
+	class Dokument{
+		def dokument_id,emne
+		Faktura faktura = null
+	}
 
 	class Candidate{
 		def kunde_id,fulltNavn,fil_navn,mobile,vedlegg_navn,adresselinje1,adresselinje2,adresselinje3,postnummer,poststed,land,resultat
@@ -385,6 +416,46 @@ class Main extends Script {
 	    }
 	}
 
+	def PopulateDokumentList(Boolean skipHeader)
+	{
+		def dokumentMap = [:]
+		boolean skip = skipHeader
+		def counter = 1;
+		new File(Constants.SourcePath+Constants.SourceFile).splitEachLine(Constants.Csv_delimeter) {fields ->
+			if(skip){
+		  		skip = false
+		  	}
+		  	else {
+			  	def filnavn = fields[Constants.filnavn_plass].trim()
+			  	def vedlegg = fields[Constants.vedlegg_plass].trim()
+			  	def faktura = null
+				if(fields[Constants.kid_plass] != null && fields[Constants.kid_plass].length() > 1){ //kid;kontonummer;beløp;forfall
+				    faktura = new Faktura(
+						kid:fields[Constants.kid_plass].trim(),
+						kontonummer:fields[Constants.kontonummer_plass].trim(),
+						beloep:fields[Constants.beloep_plass].trim(),
+						forfallsdato:fields[Constants.forfallsdato_plass].trim()
+					)
+				}
+			  	if(dokumentMap.containsKey(filnavn) ){
+
+			  	}
+			  	else
+			  	{
+			  		dokumentMap.put(filnavn , new Dokument(dokument_id:'hoved_'+counter++,emne:fields[Constants.emne_plass].trim(), faktura:faktura))
+			  	}
+			  	
+			  	if(dokumentMap.containsKey(vedlegg)){
+			  	
+			  	}
+			  	else if(vedlegg != null && vedlegg.length() > 0){
+			  		dokumentMap.put(vedlegg , new Dokument(dokument_id:'vedlegg_'+counter++,emne:fields[Constants.emne_plass].trim()))
+			  	}
+		  	}
+		}
+		dokumentMap
+	}
+
 	def PopulateMottagerListFromSourceCSV(Boolean skipHeader){ 
 		ArrayList mottagerList = new ArrayList();
 		boolean skip = skipHeader
@@ -395,25 +466,25 @@ class Main extends Script {
 		  		
 		  	}
 		  	//'Kunde ID;Fødsels- og personnummer;Fullt navn, fornavn først;Adresselinje;Adresselinje 2;Adresselinje 3;Postnummer;Poststed;Mobil;Filnavn;Organisasjonsnummer(hvis bedrift);Land'
-		  	else if(fields[10]){
+		  	else if(fields[Constants.orgnummer_plass]){
 				def virksomhet = new Organization(
-					kunde_id:fields[0].trim(),
-					orgNumber: fields[10].trim(),
-					fulltNavn:fields[2].trim(),
-					adresselinje1:fields[3].trim(),
-					adresselinje2:fields[4].trim(),
-					adresselinje3:fields[5].trim(),
-					postnummer:fields[6].trim(),
-					poststed:fields[7].trim(),
-					land:fields[11].trim(),
-					fil_navn:fields[9].trim(),
+					kunde_id:fields[Constants.kunde_id_plass].trim(),
+					orgNumber: fields[Constants.orgnummer_plass].trim(),
+					fulltNavn:fields[Constants.fullt_navn_plass].trim(),
+					adresselinje1:fields[Constants.adresselinje1_plass].trim(),
+					adresselinje2:fields[Constants.adresselinje2_plass].trim(),
+					postnummer:fields[Constants.postnummer_plass].trim(),
+					poststed:fields[Constants.poststed_plass].trim(),
+					land:fields[Constants.land_plass].trim(),
+					fil_navn:fields[Constants.filnavn_plass].trim(),
+					vedlegg_navn:fields[Constants.vedlegg_plass].trim()
 					)
-				if(fields[12] != null && fields[12].length() > 1){ //kid;kontonummer;beløp;forfall
+				if(fields[Constants.kid_plass] != null && fields[Constants.kid_plass].length() > 1){ //kid;kontonummer;beløp;forfall
 					def faktura = new Faktura(
-						kid:fields[12].trim(),
-						kontonummer:fields[13].trim(),
-						beloep:fields[14].trim(),
-						forfallsdato:fields[15].trim()
+						kid:fields[Constants.kid_plass].trim(),
+						kontonummer:fields[Constants.kontonummer_plass].trim(),
+						beloep:fields[Constants.beloep_plass].trim(),
+						forfallsdato:fields[Constants.forfallsdato_plass].trim()
 					)
 					virksomhet.faktura = faktura
 				}
@@ -421,24 +492,24 @@ class Main extends Script {
 			}
 		  	else {
 				def person = new Person(
-					kunde_id:fields[0].trim(),
-					ssn:fields[1].trim(),
-					fulltNavn:fields[2].trim(),
-					adresselinje1:fields[3].trim(),
-					adresselinje2:fields[4].trim(),
-					adresselinje3:fields[5].trim(),
-					postnummer:fields[6].trim(),
-					poststed:fields[7].trim(),
-					mobil:fields[8].trim(),
-					fil_navn:fields[9].trim(),
-					land:fields[11].trim()
+					kunde_id:fields[Constants.kunde_id_plass].trim(),
+					ssn:fields[Constants.foedselsnummer_plass].trim(),
+					fulltNavn:fields[Constants.fullt_navn_plass].trim(),
+					adresselinje1:fields[Constants.adresselinje1_plass].trim(),
+					adresselinje2:fields[Constants.adresselinje2_plass].trim(),
+					postnummer:fields[Constants.postnummer_plass].trim(),
+					poststed:fields[Constants.poststed_plass].trim(),
+					mobil:fields[Constants.mobil_plass].trim(),
+					fil_navn:fields[Constants.filnavn_plass].trim(),
+					vedlegg_navn:fields[Constants.vedlegg_plass].trim(),
+					land:fields[Constants.land_plass].trim()
 				)
-				if(fields[12] != null && fields[12].length() > 1){ //kid;kontonummer;beløp;forfall
+				if(fields[Constants.kid_plass] != null && fields[Constants.kid_plass].length() > 1){ //kid;kontonummer;beløp;forfall
 					def faktura = new Faktura(
-						kid:fields[12].trim(),
-						kontonummer:fields[13].trim(),
-						beloep:fields[14].trim(),
-						forfallsdato:fields[15].trim()
+						kid:fields[Constants.kid_plass].trim(),
+						kontonummer:fields[Constants.kontonummer_plass].trim(),
+						beloep:fields[Constants.beloep_plass].trim(),
+						forfallsdato:fields[Constants.forfallsdato_plass].trim()
 					)
 					person.faktura = faktura
 				}
@@ -453,10 +524,9 @@ class Main extends Script {
 	{
 		def file  = new File(Constants.SourcePath+"ExampleFormat.csv")
 		file << Constants.CsvHeader+'\n'
-		file << '01;;Ola Normann;Vegen 1;0001;Oslo;;01.pdf;;Norway;12345678456789013;70500570650;13;2016-02-16'+'\n'//By name and address
-		file << '02;;Åke Svenske;Gatan 1;0001;Stockholm;;02.pdf;;Sweden;;;;'+'\n'//By name and address
-		file << '03;31108412312;;;;;;03.pdf;;Norway;;;;'+'\n'//By SSN
-		file << '04;;;;;;;04.pdf;123123;Norway;;;;'+'\n'//Bedrift
+		file << '1;311084xxxxx;;Collettsgate 68;;;0460;Oslo;;Faktura Januar;Hoveddokument.pdf;Vedlegg.pdf;;Norway;31232312;15942112222;100;01-02-2016'
+		file << '2;;Åke Svenske;Gatan 1;;;1234;Stockholm;;Informasjon;Informasjonsbrev.pdf;;;Sweden;;;;'
+		file << '3;;Ola Normann;Vegen 1;PB 1;Etasje 2;0001;Oslo;;Årsavgift;Faktura_03.pdf;reklame.pdf;;Norway;123123123;15941111111;1900;02-02-2016'
 
 	}
 
@@ -494,6 +564,8 @@ class Main extends Script {
 					     		"adresse"(){
 					     			"adresse-format1"(){
 					     				"adresselinje1"(m.adresselinje1)
+					     				if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
+								  			"adresselinje2"(m.adresselinje2)
 					     				"postnummer"(m?.postnummer?.padLeft(4,'0'))
 					     				"poststed"(m.poststed)
 					     			}
@@ -513,7 +585,7 @@ class Main extends Script {
 		return writer.toString()
 	}
 
-	def MakeMasseutsendelseWithPrint(ArrayList mottagerList,Config config){
+	def MakeMasseutsendelseWithPrint(ArrayList mottagerList,Map dokumentList,Config config){
 		def writer = new StringWriter()
 		def xml = new MarkupBuilder(writer)	
 		
@@ -536,26 +608,30 @@ class Main extends Script {
 				  }
 			  }
 			  "post"(){
-			  	for(def m : mottagerList){
-			  		if(m.faktura != null){
+			  	dokumentList.each { entry ->
+				    println "filnavn: $entry.key faktura: $entry.value"
+			  		if(entry.value.faktura != null){
 			  			"dokument"('xsi:type':'faktura'){
-				  			"id"("id_"+m.kunde_id);
-				  			"fil"(m.fil_navn)
+				  			"id"(entry.value.dokument_id);
+				  			"fil"(entry.key)
 				  			"innstillinger"(){
-					  			"emne"(config.emne)
+				  				if(entry.value.emne)
+					  				"emne"(entry.value.emne)
 					  		}
-				  			"kid"(m.faktura.kid);
-			  				"beloep"(m.faktura.beloep)
-			  				"kontonummer"(m.faktura.kontonummer)
-			  				"forfallsdato"(m.faktura.forfallsdato)
+				  			"kid"(entry.value.faktura.kid);
+			  				"beloep"(entry.value.faktura.beloep)
+			  				"kontonummer"(entry.value.faktura.kontonummer)
+			  				"forfallsdato"(entry.value.faktura.forfallsdato)
 			  			}
 			  		}
 			  		else{
 			  			"dokument"(){
-				  			"id"("id_"+m.kunde_id);
-				  			"fil"(m.fil_navn)
+				  			"id"(entry.value.dokument_id);
+				  			"fil"(entry.key)
+
 				  			"innstillinger"(){
-					  			"emne"(config.emne)
+					  			if(entry.value.emne)
+					  				"emne"(entry.value.emne)
 					  		}
 				  		}
 
@@ -564,71 +640,73 @@ class Main extends Script {
 			  }
 			  "forsendelser"(){
 			  	for(def m : mottagerList){
+			  		def dok_element = dokumentList.get(m.fil_navn)
+			  		def vdl_element = dokumentList.get(m.vedlegg_navn)
 			  		def postType=''
 			  		if(config.FallbackToPrint){
 				  		"brev"('xsi:type':'brev-med-print'){
-				  			"mottaker"(){
-				  				"kunde-id"(m.kunde_id)
-				  				if(m instanceof Person){
-					  				if(m?.ssn?.length() > 1 && m?.ssn?.length() < 11)
-					    					"foedselsnummer"(m.ssn.padLeft(11,'0'))
-					    				else if (m?.ssn?.length() == 11)
-					    					"foedselsnummer"(m.ssn)
-					    				else{
-					    	 			"navn"(){
-							     			"navn-format1"(){
-							     				"fullt-navn-fornavn-foerst"(m.fulltNavn)
-							     			}
-					    	 			}
-					    	 			"adresse"(){
-								     		"adresse-format1"(){
-								     			"adresselinje1"(m.adresselinje1)
-								   				if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
-								  					"adresselinje2"(m.adresselinje2)
-								 				if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
-								     				"adresselinje3"(m.adresselinje3)
-								     			"postnummer"(m.postnummer.padLeft(4,'0'))
-								     			"poststed"(m.poststed)
-								     		}
-					    	 			}
-					    	 		}
-				     			}
-				     			else if(m instanceof Organization){
-					  				"organisasjonsnummer"(m.orgNumber)
-					    			}
+				  		"mottaker"(){
+				  			"kunde-id"(m.kunde_id)
+				  			if(m instanceof Person){
+					  			if(m?.ssn?.length() > 1 && m?.ssn?.length() < 11)
+					    				"foedselsnummer"(m.ssn.padLeft(11,'0'))
+					    			else if (m?.ssn?.length() == 11)
+					    				"foedselsnummer"(m.ssn)
+					    			else{
+					     			"navn"(){
+						     			"navn-format1"(){
+						     				"fullt-navn-fornavn-foerst"(m.fulltNavn)
+						     			}
+					     			}
+					     			"adresse"(){
+							     		"adresse-format1"(){
+							     			"adresselinje1"(m.adresselinje1)
+							   				if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
+							  					"adresselinje2"(m.adresselinje2)
+							     			"postnummer"(m.postnummer.padLeft(4,'0'))
+							     			"poststed"(m.poststed)
+							     		}
+					     			}
+					     		}
 				     		}
-				  		
-					  	"hoveddokument"("uuid":UUID.randomUUID().toString(),"refid":"id_"+m.kunde_id)
-						  	"fysisk-print"(){
-						  		"postmottaker"(m.fulltNavn);
-						  		if(m.land == null || m.land == 'NORWAY'){
-							  		"norsk-mottakeradresse"{
-							  			"adresselinje1"(m.adresselinje1)
-						     			if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
-						     				"adresselinje2"(m.adresselinje2)
-						     			if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
-						     				"adresselinje3"(m.adresselinje3)
-							  			"postnummer"(m?.postnummer?.padLeft(4,'0'))
-							  			"poststed"(m.poststed)
-							  		}
+				     		else if(m instanceof Organization){
+					  			"organisasjonsnummer"(m.orgNumber)
+					    		}
+				     	}
+					  	"hoveddokument"("uuid":UUID.randomUUID().toString(),"refid":dok_element.dokument_id)
+					  	if(m.vedlegg_navn){
+					  		"vedlegg"("uuid":UUID.randomUUID().toString(),"refid":vdl_element.dokument_id)
+					  	}
+						"fysisk-print"(){
+							"postmottaker"(m.fulltNavn);
+							if(m.land == null || m.land == 'NORWAY'){
+						  		"norsk-mottakeradresse"{
+						  			"adresselinje1"(m.adresselinje1)
+						 			if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
+						 				"adresselinje2"(m.adresselinje2)
+						 			if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
+						 				"adresselinje3"(m.adresselinje3)
+						  			"postnummer"(m?.postnummer?.padLeft(4,'0'))
+						  			"poststed"(m.poststed)
 						  		}
-						  		else{
-						  			"utenlandsk-mottakeradresse"{
-				       	               	"adresselinje1"(m.adresselinje1)
-						     			if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
-						     				"adresselinje2"(m.adresselinje2)
-						     			if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
-						     				"adresselinje3"(m.adresselinje3)
-				       	               	"land"(m.land)
-			           	           	}
-						  		}
-						  		"retur-postmottaker"(config.ReturPostmottaker)
-						  		"norsk-returadresse"{
-						  			"adresselinje1"(config.ReturAdresse)
-						  			"postnummer"(config.ReturPostnummer)
-						  			"poststed"(config.ReturPoststed)
-						  		}
-						  	}
+							}
+							else{
+								"utenlandsk-mottakeradresse"{
+				       	           	"adresselinje1"(m.adresselinje1)
+						 			if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
+						 				"adresselinje2"(m.adresselinje2)
+						 			if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
+						 				"adresselinje3"(m.adresselinje3)
+				       	           	"land"(m.land)
+			           	       	}
+							}
+							"retur-postmottaker"(config.ReturPostmottaker)
+							"norsk-returadresse"{
+								"adresselinje1"(config.ReturAdresse)
+								"postnummer"(config.ReturPostnummer)
+								"poststed"(config.ReturPoststed)
+							}
+						}
 						}
 				  	}			  	
 			  		else{
@@ -659,15 +737,17 @@ class Main extends Script {
 					  				"organisasjonsnummer"(m.orgNumber)
 					    		}
 				  			}
-					  		"hoveddokument"("uuid":UUID.randomUUID().toString(),"refid":"id_"+m.kunde_id)
+					  		
+					  		"hoveddokument"("uuid":UUID.randomUUID().toString(),"refid":dok_element.dokument_id)
+					  		if(m.vedlegg_navn){
+					  			"vedlegg"("uuid":UUID.randomUUID().toString(),"refid":vdl_element.dokument_id)
+					  		}
 				  		}
 			  		}
-			  		
 			  	}
 			  }
 			}
 		}
-
 		return writer.toString()
 	}
 
@@ -741,9 +821,7 @@ class Main extends Script {
 		def reciever_map = recievers.collectEntries {
 			[(it.fil_navn): null]
 		}
-		println reciever_map
 		def newdir = new File(Constants.JobDir+'/')
-		println 'path: '+newdir
 		new File(Constants.SourcePath).eachFileMatch(~/.*\.pdf/) { f ->
 			//def (filename, filetype) = f.getName().tokenize('.')
 			def filename = f.getName()
