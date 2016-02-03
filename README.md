@@ -10,7 +10,7 @@ Groovy script for sending documents to Digipost batch API.
  * save it as ./Digipost/Source/source.csv with UTF8 encoding
 6. copy all the PDF/HTML files to Digipost/Source
 * open Digipost/config.json and fill in your AvsenderID/BehandlerId/Sftp_bruker_id
- * "fallbackToPrint": false, --  Set this to true to send physical letters to the people/organizations who have does not have an Digipost account
+ * "fallbackToPrint": false, --  Set this to true to send physical letters to the people/organizations who does not have an Digipost account
  * "returPoststed": "", -- only nececcary if FallbackToPrint is active. Norwegian zip address
  * "returPostnummer": "", -- only nececcary if FallbackToPrint is active. Norwegian zip code
  * "returAdresse": "", -- only nececcary if FallbackToPrint is active. Norwegian address
@@ -20,8 +20,8 @@ Groovy script for sending documents to Digipost batch API.
  * "jobb_navn": "Jobb navn", -- The name of the job. 
  * "emne": "Test Emne", -- The subject of the letter
  * "sftpPassphrase": "", -- If you have a personal password on your ssh key
- * "autoGodkjennJobb": true, -- auto approval of job, set this to false to manually approve it from digipost.no/bedrift
- * "behandler_id": "" -- same as avsender_id if no you are not a partner
+ * "autoGodkjennJobb": true, -- auto approval of job, set this to false to manually approve it in digipost.no/bedrift
+ * "behandler_id": "" -- if you are a partner and are sending on behalf of someone
 * run 'groovy DigipostBatch.groovy -test' to see if the source format is OK
 * run 'groovy DigipostBatch.groovy -mottakersplitt' to see how many of the candidates have Digipost accounts.
 * run 'groovy DigipostBatch.groovy -masseutsendelse' to send the documents
