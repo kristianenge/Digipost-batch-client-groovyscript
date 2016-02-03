@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Digipost - grensesnitt for avsendere Resultat for en masseutsendelse -->
+<xsd:schema
+	version="1.0"
+	targetNamespace="http://www.digipost.no/xsd/avsender2_1"
+	xmlns:dp="http://www.digipost.no/xsd/avsender2_1"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+	xmlns:sig="http://www.w3.org/2000/09/xmldsig#"
+	jaxb:version="2.0" elementFormDefault="qualified">
+
+	<xsd:import namespace="http://www.w3.org/2000/09/xmldsig#" schemaLocation="xmldsig.xsd" />
+
+	<xsd:include schemaLocation="digipost-common.xsd" />
+
+	<!-- masseutsendelse-resultat -->
+	<xsd:element name="masseutsendelse-resultat">
+		<xsd:annotation>
+			<xsd:documentation>
+				Respons for en masseutsendelse i Digipost.
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="status" type="dp:jobb-status" minOccurs="1" maxOccurs="1" />
+				<xsd:element name="jobb-info" type="dp:jobb-info" minOccurs="1" maxOccurs="1" />
+				<xsd:choice>
+					<xsd:sequence>
+						<xsd:element name="mottaker-sammendrag" type="dp:mottaker-sammendrag" minOccurs="0" maxOccurs="1" />
+						<xsd:element name="print-sammendrag" type="dp:print-sammendrag" minOccurs="0" maxOccurs="1" />
+						<xsd:element name="mottaker-resultater" type="dp:mottaker-resultat-liste" minOccurs="0" maxOccurs="1" />
+						<xsd:element name="dokumenter-med-feil" type="dp:dokument-med-feil-liste" minOccurs="0" maxOccurs="1" />
+						<xsd:element name="brev-resultater" type="dp:brev-resultat-liste" minOccurs="0" maxOccurs="1" />
+					</xsd:sequence>
+					<xsd:element name="feilinformasjon" type="dp:feilinformasjon" minOccurs="1" maxOccurs="1" />
+				</xsd:choice>
+				<xsd:element ref="sig:Signature" minOccurs="0" maxOccurs="1" />
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<!-- brev-resultat-liste -->
+	<xsd:complexType name="brev-resultat-liste">
+		<xsd:sequence>
+			<xsd:element name="resultat" type="dp:brev-resultat" minOccurs="0" maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<!-- brev-resultat -->
+	<xsd:complexType name="brev-resultat">
+		<xsd:sequence>
+			<xsd:element name="hoveddokument-uuid" type="xsd:string" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="vedlegg" type="dp:vedlegg-liste" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="resultat" type="dp:brev-resultat-kode" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="kanal" type="dp:kanal-kode" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="feilinformasjon" type="dp:brev-feil-liste" minOccurs="0" maxOccurs="1" />
+		</xsd:sequence>
+		<xsd:attribute name="brev-id" type="xsd:string" />
+	</xsd:complexType>
+	
+	<xsd:complexType name="vedlegg-liste">
+		<xsd:sequence>
+			<xsd:element name="dokument-uuid" type="xsd:string" minOccurs="1" maxOccurs="99" />
+		</xsd:sequence>	
+	</xsd:complexType>
+
+	<!-- brev-resultat-kode -->
+	<xsd:simpleType name="brev-resultat-kode">
+		<xsd:annotation>
+			<xsd:appinfo>
+				<jaxb:typesafeEnumClass />
+			</xsd:appinfo>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="SENDT">
+				<xsd:annotation>
+					<xsd:appinfo>
+						<jaxb:typesafeEnumMember name="SENDT" />
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:enumeration>
+			<xsd:enumeration value="IKKE_SENDT">
+				<xsd:annotation>
+					<xsd:appinfo>
+						<jaxb:typesafeEnumMember name="IKKE_SENDT" />
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:enumeration>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<!-- kanal -->
+	<xsd:simpleType name="kanal-kode">
+		<xsd:annotation>
+			<xsd:appinfo>
+				<jaxb:typesafeEnumClass />
+			</xsd:appinfo>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="WEB">
+				<xsd:annotation>
+					<xsd:appinfo>
+						<jaxb:typesafeEnumMember name="WEB" />
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:enumeration>
+			<xsd:enumeration value="PRINT">
+				<xsd:annotation>
+					<xsd:appinfo>
+						<jaxb:typesafeEnumMember name="PRINT" />
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:enumeration>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+
+	<!-- dokument-feil-type-kode -->
+	<xsd:simpleType name="dokument-feil-type-kode">
+		<xsd:annotation>
+			<xsd:appinfo>
+				<jaxb:typesafeEnumClass />
+			</xsd:appinfo>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="UGYLDIG_FOR_WEB">
+				<xsd:annotation>
+					<xsd:appinfo>
+						<jaxb:typesafeEnumMember name="UGYLDIG_FOR_WEB" />
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:enumeration>
+			<xsd:enumeration value="UGYLDIG_FOR_PRINT">
+				<xsd:annotation>
+					<xsd:appinfo>
+						<jaxb:typesafeEnumMember name="UGYLDIG_FOR_PRINT" />
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:enumeration>
+			<xsd:enumeration value="USPESIFISERT_FEIL">
+				<xsd:annotation>
+					<xsd:appinfo>
+						<jaxb:typesafeEnumMember name="USPESIFISERT_FEIL" />
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:enumeration>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<!-- brev-feil-liste -->
+	<xsd:complexType name="brev-feil-liste">
+		<xsd:sequence>
+			<xsd:element name="feil" type="dp:brev-feil" minOccurs="0" maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<!-- brev-feil -->
+	<xsd:complexType name="brev-feil">
+		<xsd:sequence>
+			<xsd:element name="type" type="dp:brev-feil-kode" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="melding" type="xsd:string" minOccurs="0" maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<!-- brev-feil-kode -->
+    <xsd:simpleType name="brev-feil-kode">
+    	<xsd:annotation>
+			<xsd:appinfo>
+				<jaxb:typesafeEnumClass />
+			</xsd:appinfo>
+		</xsd:annotation>
+    	<xsd:restriction base="xsd:string">
+            <xsd:enumeration value="UGYLDIG_DOKUMENT">
+                <xsd:annotation>
+                    <xsd:documentation>Brevet inneholdt et eller flere ugyldige dokumenter.</xsd:documentation>
+                    <xsd:appinfo>
+                        <jaxb:typesafeEnumMember name="UGYLDIG_DOKUMENT"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+            <xsd:enumeration value="UGYLDIG_MOTTAKER">
+                <xsd:annotation>
+                    <xsd:documentation>Mottakerinformasjon for brevet var ugyldig og mottaker ble derfor ikke identifisert</xsd:documentation>
+                    <xsd:appinfo>
+                        <jaxb:typesafeEnumMember name="UGYLDIG_MOTTAKER"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+            <xsd:enumeration value="UGYLDIG_FOR_PRINT">
+                <xsd:annotation>
+                    <xsd:documentation>Brevet kunne ikke sendes fysisk p.g.a. ugyldig(e) dokument(er) eller metadata for print</xsd:documentation>
+                    <xsd:appinfo>
+                        <jaxb:typesafeEnumMember name="UGYLDIG_FOR_PRINT"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>            
+            <xsd:enumeration value="USPESIFISERT_FEIL">
+                <xsd:annotation>
+                    <xsd:documentation>Uspesifisert feil</xsd:documentation>
+                    <xsd:appinfo>
+                        <jaxb:typesafeEnumMember name="USPESIFISERT_FEIL"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+        </xsd:restriction>
+    </xsd:simpleType>
+    
+	<!-- dokument-med-feil-liste -->
+	<xsd:complexType name="dokument-med-feil-liste">
+		<xsd:sequence>
+			<xsd:element name="dokument-med-feil" type="dp:dokument-med-feil" minOccurs="0" maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<!-- dokument-med-feil -->
+	<xsd:complexType name="dokument-med-feil">
+		<xsd:sequence>
+			<xsd:element name="dokument-id" type="xsd:string" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="feil" type="dp:dokument-feil" minOccurs="0" maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<!-- dokument-feil -->
+	<xsd:complexType name="dokument-feil">
+		<xsd:sequence>
+			<xsd:element name="type" type="dp:dokument-feil-type-kode" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="melding" type="xsd:string" minOccurs="0" maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+</xsd:schema>

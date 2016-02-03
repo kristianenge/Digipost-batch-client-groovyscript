@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+Digipost - grensesnitt for avsendere
+Print
+-->
+<xsd:schema 
+	version="1.0" 
+	targetNamespace="http://www.digipost.no/xsd/avsender2_1"
+	xmlns="http://www.digipost.no/xsd/avsender2_1"
+	xmlns:dp="http://www.digipost.no/xsd/avsender2_1"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+	jaxb:version="2.0"
+	elementFormDefault="qualified">
+
+	<xsd:include schemaLocation="masseutsendelse.xsd" />
+
+	<xsd:complexType name="brev-med-print">
+		<xsd:annotation>
+			<xsd:documentation>
+				Brev som skal printes og leveres som fysisk post 
+				dersom mottaker ikke kan identifiseres som Digipost-bruker.
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexContent>
+			<xsd:extension base="brev">
+				<xsd:sequence>
+					<xsd:element name="fysisk-print" type="fysisk-print-info" minOccurs="1" maxOccurs="1" />
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+
+	<xsd:complexType name="fysisk-print-info">
+		<xsd:sequence>
+			<xsd:element name="postmottaker" type="postmottaker-navn" minOccurs="1" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+						Mottakers navn som skal benyttes ved fysisk sending,
+						dersom mottaker ikke har Digipost-adresse.
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:choice>
+				<xsd:annotation>
+					<xsd:documentation>
+						Mottakers post-adresse som skal benyttes ved fysisk sending,
+						dersom mottaker ikke har Digipost-adresse.
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:element name="norsk-mottakeradresse" type="norsk-postadresse" minOccurs="1" maxOccurs="1" />
+				<xsd:element name="utenlandsk-mottakeradresse" type="utenlandsk-postadresse" minOccurs="1" maxOccurs="1" />
+			</xsd:choice>
+			<xsd:element name="posttype" minOccurs="0" maxOccurs="1" default="B">
+				<xsd:annotation>
+					<xsd:documentation>
+						Forsendelse-type: A eller B for hhv.
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string">
+						<xsd:pattern value="A|B" />
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="retur-postmottaker" type="postmottaker-navn" minOccurs="1" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+						Navn på returmottaker.
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:choice>
+				<xsd:annotation>
+					<xsd:documentation>
+						Returadresse.
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:element name="norsk-returadresse" type="norsk-postadresse" minOccurs="1" maxOccurs="1" />
+				<xsd:element name="utenlandsk-returadresse" type="utenlandsk-postadresse" minOccurs="1" maxOccurs="1" />
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="norsk-postadresse">
+		<xsd:sequence>
+			<xsd:element name="adresselinje1" type="adresselinje" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="adresselinje2" type="adresselinje" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="postnummer" type="norsk-postnummer" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="poststed" type="poststed" minOccurs="1" maxOccurs="1" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="utenlandsk-postadresse">
+		<xsd:sequence>
+			<xsd:element name="adresselinje1" type="adresselinje" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="adresselinje2" type="adresselinje" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="adresselinje3" type="adresselinje" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="adresselinje4" type="adresselinje" minOccurs="0" maxOccurs="1" />
+			<xsd:choice>
+				<xsd:element name="land" type="land" minOccurs="1" maxOccurs="1"/>
+				<xsd:element name="land-kode" type="land-kode" minOccurs="1" maxOccurs="1"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:simpleType name="norsk-postnummer">
+		<xsd:annotation>
+			<xsd:documentation>
+				Fire-sifret norsk postnummer.
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string" />
+	</xsd:simpleType>
+
+	<xsd:simpleType name="postmottaker-navn">
+		<xsd:annotation>
+			<xsd:documentation>
+				Navn på mottaker, slik det skal fremstå på konvolutten
+				(dvs. i vinduet på vinduskonvolutten).
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:maxLength value="130" />
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="adresselinje">
+		<xsd:restriction base="xsd:string">
+			<xsd:maxLength value="100" />
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="poststed">
+		<xsd:annotation>
+			<xsd:documentation>
+				Poststed.
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:maxLength value="80" />
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="land">
+		<xsd:annotation>
+			<xsd:documentation>
+				Norsk eller engelsk navn på land.
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:maxLength value="80" />
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="land-kode">
+		<xsd:annotation>
+			<xsd:documentation>
+				To-bokstavs landkode ihht ISO 3166-1 alpha-2 standarden.
+							(http://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:maxLength value="2" />
+		</xsd:restriction>
+	</xsd:simpleType>
+
+</xsd:schema>

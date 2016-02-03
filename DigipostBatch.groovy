@@ -10,6 +10,12 @@ import static Constants
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 
+import javax.xml.XMLConstants
+import javax.xml.transform.stream.StreamSource
+import javax.xml.transform.Source
+import javax.xml.validation.SchemaFactory;
+
+
 class Main extends Script {                     
 	
 	enum JobType{MOTTAKERSPLITT,MASSEUTSENDELSE}
@@ -61,6 +67,8 @@ class Main extends Script {
 	static void main(String[] args) {           
         InvokerHelper.runScript(Main, args)     
     }
+
+   
 
     def run() {
 
@@ -197,8 +205,26 @@ class Main extends Script {
 		    	def masseutsendelseXml = MakeMasseutsendelseWithPrint(mottagerList,dokumentList,config)
 	        	assert masseutsendelseXml
 	        	WriteXML(Constants.JobDir+Constants.RequestFileNameMasseutsendelse,masseutsendelseXml)
+	        	ValidateXML(Constants.JobDir+Constants.RequestFileNameMasseutsendelse,masseutsendelseXml)
         	}
 			println '##############################################'
+    }
+
+     def ValidateXML(pathToXml, xml){
+     	def xsdFiles = []
+		//create input stream for common xsd
+		def commonXSD = new StreamSource('./xsd/digipost-common.xsd')
+		xsdFiles.add(commonXSD)
+		def masseutsendelseXSD = new StreamSource('./xsd/masseutsendelse.xsd')
+		xsdFiles.add(masseutsendelseXSD)
+
+		
+		
+       def factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
+       def schema = factory.newSchema((Source[])xsdFiles.toArray())
+       def validator = schema.newValidator()
+       validator.validate(new StreamSource(new File(pathToXml)))
+     	
     }
 
     def TestMottakersplitt(def candidate){
