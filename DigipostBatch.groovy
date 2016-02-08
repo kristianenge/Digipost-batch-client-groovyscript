@@ -45,8 +45,6 @@ class Main extends Script {
 		kontonummer_plass = 14,
 		beloep_plass = 15,
 		forfallsdato_plass = 16
-		
-
 
 		static BasePath = './Digipost/'
 		static Csv_delimeter = ';'
@@ -135,15 +133,19 @@ class Main extends Script {
 			Test(config,shouldTestMottakersplitt,shouldTestMasseutsendelse)
 		}
 		else if (args[0] == '-report' && args[1] == 'masseutsendelse')
-		{
+		{	
+			deleteContentOfDir(new File(Constants.ReportPath))
 			Config config = HDD.load(Constants.ConfigFile)
-			makeReport(config,JobType.MASSEUTSENDELSE)
+			Boolean fetchRemote =  args.size() == 3 && args[2] == 'remote'
+			makeReport(config,JobType.MASSEUTSENDELSE,fetchRemote)		
 		}
 
 		else if (args[0] == '-report' && args[1] == 'mottakersplitt')
 		{
+			deleteContentOfDir(new File(Constants.ReportPath))
 			Config config = HDD.load(Constants.ConfigFile)
-			makeReport(config,JobType.MOTTAKERSPLITT)
+			Boolean fetchRemote =  args.size() == 3 && args[2] == 'remote'
+			makeReport(config,JobType.MOTTAKERSPLITT,fetchRemote)				
 		}
 		else{
 			GenerateCSVExample()
@@ -152,12 +154,15 @@ class Main extends Script {
 
     }
 
-    def makeReport(Config config,JobType jobtype){
+    def makeReport(Config config,JobType jobtype,boolean fetchRemote){
     		def mottagerList = PopulateMottagerListFromSourceCSV(true)
-    		println 'Checking for receipt'
-			CheckForReceipt(config,jobtype)
-			println 'Unzipping result files'
-			UnzipFiles(jobtype)
+    		def dokumentList = PopulateDokumentList(true)
+    		if(fetchRemote){
+    			println 'Checking for receipt'
+				CheckForReceipt(config,jobtype)
+				println 'Unzipping result files'
+				UnzipFiles(jobtype)
+			}
 			println 'Populating result map'
 			def resultat = PopulateResultMapFromResult(jobtype)
 			println('Count source['+mottagerList.size()+'], count result['+resultat.size()+']')
@@ -165,7 +170,7 @@ class Main extends Script {
 			println 'Updating candidates based on result'
 			UpdateCandidateWithResult(mottagerList,resultat)
 			println 'Make CSV Report'
-			MakeCSVReport(mottagerList,jobtype)
+			MakeCSVReport(mottagerList,dokumentList,jobtype)
 			println 'Done!'
 			println '##############################################'
     }
@@ -187,17 +192,22 @@ class Main extends Script {
         	def dokumentList = PopulateDokumentList(true)
 			dokumentList.each{ k, v -> println "${k}:${v}" }
         	assert mottagerList.size() > 0
-        	
+
+        	checkForDuplicates(mottagerList)
+
         	mottagerList.each { mottager ->
+
     			if(testMottakersplitt){
-	    			print 'Mottakersplitt['
+
+	    			//print 'MS['
 	    			TestMottakersplitt(mottager)
-	    			println '] - OK'
+	    			//print ']'
     			}
     			if(testMasseutsendelse){
-	    			print 'Masseutsendelse['
+    				
+	    			//print 'MU['
 	    			TestMasseutsendelse(mottager)
-	    			println '] - OK'
+	    			//print ']'
     			}
 			}
 			println 'MottagerList.size == '+ mottagerList.size()
@@ -214,6 +224,20 @@ class Main extends Script {
 				validateMasseutsendelseXML()
         	}
 			println '##############################################'
+    }
+
+    def checkForDuplicates(def mottagerList){
+    	def copyOfList = mottagerList.collect()
+        def uniqueCandidateList = copyOfList.unique { user -> user.kunde_id }
+        def diff = mottagerList.size() - uniqueCandidateList.size()
+        if(diff > 0){
+        	def commons = mottagerList.intersect(copyOfList)
+			def difference = mottagerList.plus(copyOfList)
+			difference.removeAll(commons)
+			def errorMessage = "$diff duplicate entries found. Total list[$mottagerList.size] != Unique list[$uniqueCandidateList.size]. Duplicates: $difference.kunde_id"
+			println errorMessage
+        }
+        assert diff == 0
     }
 
     def validateMasseutsendelseXML(){
@@ -269,14 +293,14 @@ class Main extends Script {
 
     	if(candidate instanceof Person) //def ssn,adresselinje1,postnummer,poststed,mobile,fil_navn,vedlegg_navn,kunde_id,fulltNavn,resultat,adresselinje2,land
     	{
-    		print 'p'
+    		//print 'p'
     		assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
     		assert (candidate.ssn && !candidate.ssn.allWhitespace) || ((candidate?.fulltNavn && !candidate.fulltNavn.allWhitespace) && (candidate.adresselinje1 && !candidate.adresselinje1.allWhitespace) && (candidate.postnummer && !candidate.postnummer.allWhitespace) && (candidate.poststed && !candidate.poststed.allWhitespace))
     		assert (candidate.ssn) || (candidate.land && !candidate.land.allWhitespace)
     	}
     	else if(candidate instanceof Organization) //def kunde_id,orgNumber,name,resultat
 		{
-			print 'b'
+			//print 'b'
 			assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
     		assert (candidate.orgNumber  && !candidate.orgNumber.allWhitespace)
     		assert (candidate.fulltNavn  && !candidate.fulltNavn.allWhitespace)
@@ -288,7 +312,7 @@ class Main extends Script {
 
     	if(candidate instanceof Person) //def ssn,adresselinje1,postnummer,poststed,mobile,fil_navn,vedlegg_navn,kunde_id,fulltNavn,resultat,adresselinje2,land
     	{
-    		print 'p'
+    		//print 'p'
     		assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
     		assert (candidate.ssn && !candidate.ssn.allWhitespace) || ((candidate?.fulltNavn && !candidate.fulltNavn.allWhitespace) && (candidate.adresselinje1 && !candidate.adresselinje1.allWhitespace) && (candidate.postnummer && !candidate.postnummer.allWhitespace) && (candidate.poststed && !candidate.poststed.allWhitespace))
     		assert (candidate.fil_navn && !candidate.fil_navn.allWhitespace)
@@ -296,7 +320,7 @@ class Main extends Script {
     	}
     	else if(candidate instanceof Organization) //def kunde_id,orgNumber,name,resultat
 		{
-			print 'b'
+			//print 'b'
 			assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
     		assert (candidate.orgNumber  && !candidate.orgNumber.allWhitespace)
     		assert (candidate.fulltNavn  && !candidate.fulltNavn.allWhitespace)
@@ -310,6 +334,7 @@ class Main extends Script {
     	println '############-=Mottakersplitt=-###############'
         	println 'Populating PersonList from CSV'
         	def mottagerList = PopulateMottagerListFromSourceCSV(true)
+        	def dokumentList = PopulateDokumentList(true)
         	if(mottagerList.size() == 0){
 				println('personList size: '+mottagerList.size())
 				println('NO recievers.. check '+Constants.SourcePath+Constants.SourceFile+'.')
@@ -335,7 +360,7 @@ class Main extends Script {
 			println 'Updating candidates based on result'
 			UpdateCandidateWithResult(mottagerList,resultat)
 			println 'Make CSV Report'
-			MakeCSVReport(mottagerList,JobType.MOTTAKERSPLITT)
+			MakeCSVReport(mottagerList,dokumentList,JobType.MOTTAKERSPLITT)
 			println 'Done!'
 			println '##############################################'
     }
@@ -355,13 +380,12 @@ class Main extends Script {
     	println '############-=Masseutsendelse=-###############'
         	println 'Populating PersonList from CSV' 
         	def mottagerList = PopulateMottagerListFromSourceCSV(true)
+        	def dokumentList = PopulateDokumentList(true)
         	if(mottagerList.size() == 0){
 				println('personList size: '+mottagerList.size())
 				println('NO recievers.. check '+Constants.SourcePath+Constants.SourceFile+'.')
 			}
-
-			def dokumentList = PopulateDokumentList(true)
-			dokumentList.each{ k, v -> println "${k}:${v}" }
+			
         	println 'Make Masseutsendelse XML'
         	def xml = MakeMasseutsendelseWithPrint(mottagerList,dokumentList,config)
         	println 'Write XML'
@@ -384,7 +408,7 @@ class Main extends Script {
 			println 'Updating candidates based on result'
 			UpdateCandidateWithResult(mottagerList,resultat)
 			println 'Make CSV Report'
-			MakeCSVReport(mottagerList,JobType.MASSEUTSENDELSE)
+			MakeCSVReport(mottagerList,dokumentList,JobType.MASSEUTSENDELSE)
 			println 'Done!'
 			println '##############################################'
     }
@@ -438,19 +462,19 @@ class Main extends Script {
 		def ReturPostnummer = ''
 		def ReturPoststed =''
 	}
-
+	@ToString(includeNames=true)
 	class Dokument{
 		def dokument_id,emne
 		Faktura faktura = null
 	}
-
+	@ToString(includeNames=true)
 	class Candidate{
 		def kunde_id,fulltNavn,fil_navn,mobile,vedlegg_navn,adresselinje1,adresselinje2,adresselinje3,postnummer,poststed,land,resultat
 		Faktura faktura = null
 	}
 	@InheritConstructors
 	@ToString(includePackage = false,ignoreNulls = true,includeNames=true)
-	class Person extends Candidate{
+	class Person extends Candidate  {
 		def ssn
 	}
 
@@ -462,7 +486,7 @@ class Main extends Script {
 
 	@InheritConstructors
 	@ToString(ignoreNulls = true,includeNames=true)
-	class Organization extends Candidate{
+	class Organization extends Candidate {
 		def orgNumber
 	}
 
@@ -522,9 +546,9 @@ class Main extends Script {
 	}
 
 	def PopulateMottagerListFromSourceCSV(Boolean skipHeader){ 
-		ArrayList mottagerList = new ArrayList();
+		def mottagerList = []
 		boolean skip = skipHeader
-		def counter = 1;
+		def counter = 1
 		new File(Constants.SourcePath+Constants.SourceFile).splitEachLine(Constants.Csv_delimeter) {fields ->
 			if(skip){
 		  		skip = false
@@ -582,7 +606,7 @@ class Main extends Script {
 			}
 
 		}
-		mottagerList
+		mottagerList.sort{it.kunde_id}
 	}
 
 	def GenerateCSVExample()
@@ -872,6 +896,9 @@ class Main extends Script {
 					m.resultat = 'N/A'
 				}
 			}
+			else{
+				m.resultat = 'Unknown candidate'
+			}
 		}
 	}
 
@@ -1093,7 +1120,7 @@ class Main extends Script {
     	  }
    	}
 
-	void MakeCSVReport(ArrayList candidates,JobType jobType){
+	void MakeCSVReport(ArrayList candidates,Map dokumentMap,JobType jobType){
 		assert jobType
 		def digipostFile
 		switch(jobType) {
@@ -1108,6 +1135,7 @@ class Main extends Script {
 		digipostFile.append(Constants.CsvHeader+';Resultat\n',Constants.Encoding)
 	
 		for(int i =0;i<candidates.size();i++){
+			def dokument =  dokumentMap.get(candidates.get(i).fil_navn)
 			def result = "";
 			result+=candidates.get(i).kunde_id+Constants.Csv_delimeter
 			if(candidates.get(i) instanceof Person){
@@ -1119,11 +1147,12 @@ class Main extends Script {
 			result+=candidates.get(i).fulltNavn+Constants.Csv_delimeter
 			result+=candidates.get(i).adresselinje1+Constants.Csv_delimeter
 			result+=candidates.get(i).adresselinje2+Constants.Csv_delimeter
-			result+=candidates.get(i).adresselinje3+Constants.Csv_delimeter
 			result+=candidates.get(i).postnummer+Constants.Csv_delimeter
 			result+=candidates.get(i).poststed+Constants.Csv_delimeter
 			result+=candidates.get(i).mobile+Constants.Csv_delimeter
+			result+=dokument.emne+Constants.Csv_delimeter
 			result+=candidates.get(i).fil_navn+Constants.Csv_delimeter
+			result+=candidates.get(i).vedlegg_navn+Constants.Csv_delimeter
 			if(candidates.get(i) instanceof Organization){
 				result+=candidates.get(i).orgNumber+Constants.Csv_delimeter
 			}
