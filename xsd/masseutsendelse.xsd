@@ -1,0 +1,582 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Digipost - grensesnitt for avsendere
+Masseutsendelse request
+-->
+<xsd:schema version="1.0"
+    targetNamespace="http://www.digipost.no/xsd/avsender2_1"
+    xmlns:dp="http://www.digipost.no/xsd/avsender2_1"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+	jaxb:version="2.0"
+	elementFormDefault="qualified">
+
+	<xsd:include schemaLocation="digipost-common.xsd" />
+
+	<xsd:element name="masseutsendelse">
+        <xsd:annotation>
+            <xsd:documentation>
+                Brukes til å foreta en masseutsendelse av brev i Digipost.
+            </xsd:documentation>
+        </xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="jobb-innstillinger" type="dp:jobb-innstillinger" minOccurs="1" maxOccurs="1" />
+				<xsd:choice minOccurs="1" maxOccurs="1">
+					<xsd:element name="standard-distribusjon" type="dp:standard-distribusjon" minOccurs="1" maxOccurs="1" />
+					<xsd:element name="afp-distribusjon" type="dp:afp-distribusjon" minOccurs="1" maxOccurs="1" />
+				</xsd:choice>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:complexType name="standard-distribusjon">
+		<xsd:sequence>
+			<xsd:element name="felles-innstillinger" type="dp:felles-dokument-innstillinger" minOccurs="0" maxOccurs="1">
+		        <xsd:annotation>
+		            <xsd:documentation>
+		            	Innstillinger som er felles for alle dokumenter (globale-dokument-innstillinger), samt eventuelle
+		            	navngitte innstillinger (dokument-innstillinger) som kan refereres til som baseinnstillinger for
+		            	dokumenter.
+		            </xsd:documentation>
+		        </xsd:annotation>
+			</xsd:element>
+			<xsd:element name="post" type="dp:dokument-liste" minOccurs="1" maxOccurs="1">
+		        <xsd:annotation>
+		            <xsd:documentation>
+		            	Dokumenter som skal sendes i denne jobben.
+		            </xsd:documentation>
+		        </xsd:annotation>
+			</xsd:element>
+			<xsd:element name="forsendelser" type="dp:brev-liste" minOccurs="1" maxOccurs="1">
+		        <xsd:annotation>
+		            <xsd:documentation>
+		           		Liste over brev som skal sendes i denne jobben.
+		            </xsd:documentation>
+		        </xsd:annotation>
+			</xsd:element>
+
+		</xsd:sequence>
+	</xsd:complexType>
+
+    <xsd:complexType name="felles-dokument-innstillinger">
+    	<xsd:annotation>
+    		<xsd:documentation>
+    			<![CDATA[
+<h1>Felles dokumentinnstillinger</h1>
+<p>
+	Oppsett av felles dokumentinnstillinger. Her kan man angi et sett med innstillinger i
+	<code>globale-dokument-innstillinger</code> som alle dokumenter vil <em>arve</em> fra. I tillegg kan man
+	angi en eller flere refererbare <code>dokument-innstillinger</code> dersom man trenger flere sett
+	med innstillinger som dokumenter kan arve fra.
+</p>
+<p>
+	Alle elementer her er valgfrie, og dersom man ike angir hverken <code>globale-dokument-innstillinger</code>
+	eller refererbare <code>dokument-innstillinger</code>, vil ev. manglende innstillinger per dokument
+	bli <em>ikke spesifisert</em>, eller f&aring;r en standardverdi. Hvilke standardverdier som ev. blir satt
+	finnes i dokumentasjon av typen <code>dokument-innstillinger</code>.
+</p>
+<h2>Litt om arv:</h2>
+<p>
+	Med arv muliggj&oslash;res en viss fleksibilitet for &aring; unng&aring; un&oslash;dvendig dobbeltspesifisering
+	av innstillinger for dokumenter i store masseutsendelser. Arvehierarkiet ser slik ut (pil angir "arver fra"):
+</p>
+<pre>
+    (0)                   standardverdier    (bestemmes av Digipost, angis ikke av masseutsendelse)
+                                &uarr;
+    (1) felles-dokument-innstillinger.globale-dokument-innstillinger
+                                &uarr;
+    (2)     felles-dokument-innstillinger.dokument-innstillinger
+                                &#8673;
+    (3)                 dokument.innstillinger
+                                &uarr;
+    (4)          dokument-til-mottaker.innstillinger
+</pre>
+<p>
+	Alle de niv&aring;ene ovenfor er valgfrie bortsett fra det &oslash;verste som er standardverdiene som bestemmes av Digipost og kan ikke
+	angis og konfigureres av en masseutsendelses-jobb. De 4 nederste niv&aring;ene kan konfigureres av en masseutsendelse, og verdier
+	angitt p&aring; et niv&aring; vil alltid overskrive eventuell verdi satt i et overst&aring;ende niv&aring;. Et niv&aring; vil kun arve verdi(er) dersom
+	det selv ikke har angitt noen verdi for enkeltinnstilling(er). All arv er implisitt bortsett fra niv&aring; <strong>(3)</strong> til
+	<strong>(2)</strong>, hvor <strong>(3)</strong> kan eksplisitt angi en instans av <strong>(2)</strong> &aring; arve fra i stedet for
+	&aring; implisitt arve direkte fra <strong>(1)</strong>.
+</p>
+<p>
+	Det mest vanlige er &aring; angi <code>globale-dokument-innstillinger</code> (1), og overstyre individuelle innstillinger per
+	<code>dokument-til-mottaker</code> (4). Et case kan f.eks. v&aelig;re &aring; angi at alle dokumenter skal ha
+	sms-varsling, men man &oslash;nsker personaliserte emner per dokument.
+</p>
+<p>
+	For &aring; annulere en arvet innstilling kan man angi et tomt element. F.eks. dersom man har angitt sms-varsling i
+	<code>globale-dokument-innstillinger</code> (1), men ikke vil at det skal sendes ut SMS for enkelte mottakere, kan
+	man angi <code>&lt;sms-varsling /&gt;</code> p&aring; <code>dokument-til-mottaker.innstillinger</code> (4).
+</p>
+
+<hr />
+    			]]>
+
+
+    			
+    		</xsd:documentation>
+    	</xsd:annotation>
+        <xsd:sequence minOccurs="1" maxOccurs="1">
+            <xsd:element name="globale-dokument-innstillinger" type="dp:dokument-innstillinger" minOccurs="0" maxOccurs="1">
+            	<xsd:annotation>
+            		<xsd:documentation>
+						Dette er innstillinger som gjelder for alle dokumenter; alle dokumenter "arver" disse innstillingene.
+						Man kan overstyre enkeltinnstillinger (eller alle) ved å angi de på enkeltdokumenter.
+					</xsd:documentation>
+               	</xsd:annotation>
+            </xsd:element>
+            <xsd:element name="dokument-innstillinger" type="dp:refererbare-dokument-innstillinger" minOccurs="0" maxOccurs="unbounded">
+            	<xsd:annotation>
+	            	<xsd:documentation>
+						Ett eller flere sett med innstillinger som kan refereres til og "arves" fra av dokumenter.
+						Hvert sett vil arve videre fra globale-dokument-innstillinger.
+						Man kan overstyre enkeltinnstillinger (eller alle) ved å angi de på enkeltdokumenter.
+					</xsd:documentation>
+				</xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+	<xsd:complexType name="afp-distribusjon">
+		<xsd:annotation>
+		    <xsd:documentation>
+		   		Innstillinger for å sende brev fra en AFP-fil.
+		    </xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="afp-fil" type="xsd:string" minOccurs="1" maxOccurs="1">
+				<xsd:annotation>
+				    <xsd:documentation>
+				   		Path til AFP-fil, relativ til zip-rot.
+				    </xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="globale-dokument-innstillinger" type="dp:dokument-innstillinger" minOccurs="1" maxOccurs="1">
+				<xsd:annotation>
+				    <xsd:documentation>
+				   		Innstillinger som skal gjelde alle dokumentene i AFP-filen.
+				    </xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="mottaker-identifikasjon" type="dp:afp-mottaker-identifikasjon" minOccurs="1" maxOccurs="1">
+				<xsd:annotation>
+				    <xsd:documentation>
+				   		Beskriver hvordan mottakere skal identifiseres fra TLE-felter i AFP-filen.
+				    </xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+ 			<xsd:element name="antall-dokumenter" type="xsd:int" minOccurs="0" maxOccurs="1">
+				<xsd:annotation>
+				    <xsd:documentation>
+				   		Antall dokumenter AFP-filen skal inneholde. Brukes til å validere at det riktige antallet PDF-filer er blitt generert.
+				    </xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+
+	<xsd:complexType name="dokument-innstillinger">
+		<xsd:annotation>
+			<xsd:documentation>
+				Innstillinger for dokumenter. Alle elementer her er valgfrie. Dersom
+				autentiseringsnivå og/eller sensitivitetsnivå ikke angis, vil de bli
+				satt til henholdsvis standardverdiene "PASSORD" og "NORMAL". Øvrige
+				enkeltinnstillinger vil forbli "ikke spesifisert". Merk at manglende
+				verdier	kan arves fra felles-dokument-innstillinger. 
+			</xsd:documentation>
+		</xsd:annotation>
+        <xsd:sequence>
+			<xsd:element name="emne" minOccurs="0" maxOccurs="1">
+		        <xsd:annotation>
+		            <xsd:documentation>
+	    	        	Emnet for dokumentet, slik det skal vises i Digipost.
+	        	    </xsd:documentation>
+		        </xsd:annotation>
+		        <xsd:simpleType>
+		        	<xsd:restriction base="xsd:string">
+		        		<xsd:maxLength value="100"/>
+		        	</xsd:restriction>
+		        </xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="sms-varsling" type="dp:sms-varsling" minOccurs="0" maxOccurs="1">
+		        <xsd:annotation>
+		            <xsd:documentation>
+		                Angir om mottaker skal varsles på SMS (prisbelagt tilleggstjeneste). 
+		                Sms sendes kun dersom dokumentet er uåpnet på angitt varslingstidspunkt.
+		            </xsd:documentation>
+		        </xsd:annotation>
+			</xsd:element>
+			<xsd:element name="autentiseringsnivaa" type="dp:autentiseringsnivaa" minOccurs="0" maxOccurs="1">
+		        <xsd:annotation>
+		            <xsd:documentation>
+		                Angir autentiseringsnivå for dokumentet. Standardvalg er PASSORD. To-faktor er en prisbelagt tilleggstjeneste.
+		            </xsd:documentation>
+		        </xsd:annotation>
+			</xsd:element>
+			<xsd:element name="sensitivitetsnivaa" type="dp:sensitivitetsnivaa" minOccurs="0" maxOccurs="1">
+		        <xsd:annotation>
+		            <xsd:documentation>
+		                Angir sensitivitetsnivå for dokumentet. Standardvalg er NORMAL.
+		            </xsd:documentation>
+		        </xsd:annotation>
+			</xsd:element>
+            <xsd:element name="aapningskvitteringsgruppe" type="xsd:string"  minOccurs="0" maxOccurs="1">
+                <xsd:annotation>
+                    <xsd:documentation>
+                      Dersom dette feltet er satt vil det gis åpningskvittering for dette dokumentet.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+	</xsd:complexType>
+
+    <xsd:complexType name="refererbare-dokument-innstillinger">
+    	<xsd:annotation>
+    		<xsd:documentation>
+				Dokumentinnstillinger som kan arves fra ved å referere til de.
+				Disse innstillingene vil aldri være aktive med mindre noen
+				andre innstillinger	eksplisitt refererer til de, og de vil arve
+				videre fra globale-dokument-innstillinger.
+			</xsd:documentation>
+    	</xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="dp:dokument-innstillinger">
+                <xsd:attribute name="id" type="xsd:ID" use="required">
+                	<xsd:annotation>
+                		<xsd:documentation>
+							Unik ID som refereres til av innstillinger som skal arve disse
+							innstillingene.
+						</xsd:documentation>
+                	</xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="per-dokument-innstillinger">
+    	<xsd:annotation>
+    		<xsd:documentation>
+				Innstillinger som er spesifikke per dokument. Disse innstillingene
+				arver enten fra et gitt sett med dokument-innstillinger angitt eksplisitt med attributtet 'extends',
+                eller implisitt fra globale-dokument-innstillinger hvis attributtet 'extends' ikke er satt.
+			</xsd:documentation>
+    	</xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="dp:dokument-innstillinger">
+                <xsd:attribute name="extends" type="xsd:IDREF" use="optional">
+                	<xsd:annotation>
+                		<xsd:documentation>
+							Bruk dette attributtet til å eksplisitt angi dokument-innstillinger som skal arves.
+							Ev. manglende innstillinger arves videre fra globale-dokument-innstillinger.
+						</xsd:documentation>
+                	</xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+
+	<xsd:complexType name="sms-varsling">
+        <xsd:sequence>
+        	<xsd:element name="tidspunkt" type="xsd:dateTime" minOccurs="0" maxOccurs="unbounded">
+		        <xsd:annotation>
+		            <xsd:documentation>
+		                Angir et eller flere tispunkt for når SMS skal sendes ut dersom brevet fortsatt er ulest.
+		                Vi sender kun ut SMS fra kl 9 - kl 20. Eventuelle tidspunkt som faller utenfor dette intervallet vil bli levert rundt kl 9 neste morgen.
+		            </xsd:documentation>
+		        </xsd:annotation>
+			</xsd:element>
+			<xsd:element name="etter-timer" type="dp:etter-timer" minOccurs="0" maxOccurs="unbounded">
+		        <xsd:annotation>
+		            <xsd:documentation>
+		                Angir et eller flere tispunkt for når SMS skal sendes ut relativt til tidspunktet da brevet blir levert i postkassen.
+		                Vi sender kun ut SMS fra kl 9 - kl 20. Eventuelle tidspunkt som faller utenfor dette intervallet vil bli levert rundt kl 9 neste morgen.
+		            </xsd:documentation>
+		        </xsd:annotation>
+			</xsd:element>
+        </xsd:sequence>
+	</xsd:complexType>
+	
+	  <xsd:simpleType name="etter-timer"> 
+	    <xsd:restriction base="xsd:int">
+	      <xsd:minInclusive value="0"/>
+	    </xsd:restriction>
+	  </xsd:simpleType>	
+
+	<xsd:complexType name="dokument-liste">
+        <xsd:annotation>
+            <xsd:documentation>
+            	Liste av dokumenter.
+            </xsd:documentation>
+        </xsd:annotation>
+		<xsd:sequence minOccurs="1" maxOccurs="1">
+       		<xsd:element name="dokument" type="dp:dokument" minOccurs="1" maxOccurs="unbounded">
+            	<xsd:annotation>
+	                <xsd:appinfo>
+		            	<jaxb:property name="dokumenter"/>
+		            </xsd:appinfo>
+            	</xsd:annotation>
+       		</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="brev-liste">
+        <xsd:annotation>
+            <xsd:documentation>
+            	Liste av forsendelser.
+            </xsd:documentation>
+        </xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="brev" type="dp:brev" minOccurs="1" maxOccurs="unbounded">
+		        <xsd:annotation>
+		            <xsd:documentation>
+		            	En forsendelse ("konvolutt").
+		            </xsd:documentation>
+	                <xsd:appinfo>
+		            	<jaxb:property name="forsendelser"/>
+		            </xsd:appinfo>
+		        </xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="dokument">
+		<xsd:sequence>
+			<xsd:element name="id" type="xsd:ID">
+		        <xsd:annotation>
+		            <xsd:documentation>
+		            	Unik id for dette dokumentet i denne jobben.
+		            </xsd:documentation>
+		        </xsd:annotation>
+			</xsd:element>
+			<xsd:element name="fil" minOccurs="1" maxOccurs="1">
+		        <xsd:annotation>
+		            <xsd:documentation>
+						Filen for dette dokumentet. Path relativ til roten av jobb-zip-arkivet
+						1. Filstien kan bare inneholde norske tegn, tall, "-" eller "_"
+						2. Filstien kan bare inneholde ett "." tegn, etterfulgt av extension
+						3. Path-separator er "/". Merk at filstien ikke kan begynne med "/"
+
+						For å unngå problemer knyttet til encoding av filnavn i Zip-arkivet,
+						anbefaler vi å utelate bruk av særnorske tegn.
+		            </xsd:documentation>
+		        </xsd:annotation>
+		        <xsd:simpleType>
+		        	<xsd:restriction base="xsd:string">
+		        		<xsd:pattern value="([a-zA-Z\d\-_æøåÆØÅ]+)(/[a-zA-Z\d\-_æøåÆØÅ]+)*(/|\.[a-zA-Z\d]+)"/>
+		        	</xsd:restriction>
+		        </xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="innstillinger" type="dp:per-dokument-innstillinger" minOccurs="0" maxOccurs="1">
+		        <xsd:annotation>
+		            <xsd:documentation>
+		            	Innstillinger for dette dokumentet.
+		            </xsd:documentation>
+		        </xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="faktura">
+	    <xsd:complexContent>
+	      <xsd:extension base="dp:dokument">
+              <xsd:sequence>
+                  <xsd:element name="kid" minOccurs="1" maxOccurs="1" nillable="false">
+                      <xsd:simpleType>
+                          <xsd:restriction base="xsd:string">
+                              <xsd:pattern value="[0-9]{2,24}[0-9\-]{1}"/>
+                          </xsd:restriction>
+                      </xsd:simpleType>
+                  </xsd:element>
+                  <xsd:element name="beloep" minOccurs="1" maxOccurs="1" nillable="false">
+                      <xsd:simpleType>
+                          <xsd:restriction base="xsd:decimal">
+                              <xsd:fractionDigits value="2"/>
+                              <xsd:totalDigits value="15"/>
+                          </xsd:restriction>
+                      </xsd:simpleType>
+                  </xsd:element>
+                  <xsd:element name="kontonummer" minOccurs="1" maxOccurs="1" nillable="false">
+                      <xsd:annotation>
+                          <xsd:documentation>
+                              Betalingsmottakers kontonummer. 11 siffer uten mellomrom eller punktum.
+                          </xsd:documentation>
+                      </xsd:annotation>
+                      <xsd:simpleType>
+                          <xsd:restriction base="xsd:string">
+                              <xsd:pattern value="[0-9]{11}"/>
+                          </xsd:restriction>
+                      </xsd:simpleType>
+                  </xsd:element>
+                  <xsd:element name="forfallsdato" type="xsd:date" minOccurs="1" maxOccurs="1" nillable="false" />
+              </xsd:sequence>
+	      </xsd:extension>
+	    </xsd:complexContent>
+	</xsd:complexType>
+
+	<xsd:complexType name="brev">
+        <xsd:annotation>
+            <xsd:documentation>
+            	Et brev er en kobling mellom en mottaker et dokument og evt. vedlegg (dokumenter)
+            </xsd:documentation>
+        </xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="mottaker" type="dp:mottaker" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="varslingsadresser" minOccurs="0" maxOccurs="1" type="dp:varslingsadresser"/>
+    		<xsd:element name="hoveddokument" type="dp:dokument-til-mottaker" minOccurs="1" maxOccurs="1" />
+    		<xsd:element name="vedlegg" type="dp:dokument-til-mottaker" minOccurs="0" maxOccurs="99">
+    			<xsd:annotation>
+					<xsd:appinfo>
+						<jaxb:property name="vedlegg"/>
+					</xsd:appinfo>
+				</xsd:annotation>
+    		</xsd:element>
+		</xsd:sequence>
+		<xsd:attribute name="id" type="xsd:string" />
+	</xsd:complexType>
+	
+	
+	<xsd:complexType name="dokument-til-mottaker">
+		<xsd:annotation>
+            <xsd:documentation>
+            	Refererer til id på dokumentet som skal sendes til denne mottakeren.
+            </xsd:documentation>
+		</xsd:annotation>
+
+        <xsd:sequence>
+            <xsd:element name="innstillinger" type="dp:dokument-innstillinger" minOccurs="0" maxOccurs="1"/>
+        </xsd:sequence>
+
+        <xsd:attribute name="uuid" type="dp:uuid" />
+        <xsd:attribute name="refid" type="xsd:IDREF" />
+    </xsd:complexType>
+    
+    
+    <xsd:simpleType name="uuid">
+    	<xsd:annotation>
+    		<xsd:documentation>
+    			En UUID (Universally unique identifier). Denne må være globalt unik for
+    			avsender. UUID kan eksempelvis genereres med UUID.randomUUID() i Java,
+    			System.Guid.NewGuid() i .NET C#, og tilsvarende i andre språk.
+    		</xsd:documentation>
+    	</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+            <xsd:pattern value="[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"/>
+        </xsd:restriction>    
+    </xsd:simpleType>
+	
+
+    <xsd:complexType name="varslingsadresser">
+        <xsd:annotation>
+            <xsd:documentation>
+                Skal kun brukes av offentlige avsendere.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="epostadresse" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="mobilnummer" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+	<xsd:complexType name="afp-mottaker-identifikasjon">
+        <xsd:annotation>
+            <xsd:documentation>
+            	Brukes til å fortelle Digipost hvilke TLE-felter i AFP-filen som skal brukes til mottaker-identifikasjon.
+            </xsd:documentation>
+        </xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="kunde-id" type="xsd:string" minOccurs="1" maxOccurs="1">
+		        <xsd:annotation>
+		            <xsd:documentation>
+		            	Navnet på TLE-feltet som inneholder avsenders egne unike id for postmottakeren.
+		            </xsd:documentation>
+		        </xsd:annotation>
+			</xsd:element>
+			<xsd:choice minOccurs="1" maxOccurs="1">
+				<xsd:element name="foedselsnummer" type="xsd:string" minOccurs="1" maxOccurs="1">
+			        <xsd:annotation>
+			            <xsd:documentation>
+			            	Navnet på TLE-feltet som inneholder mottakers fødselsnummer.
+			            </xsd:documentation>
+			        </xsd:annotation>
+			    </xsd:element>
+				<xsd:element name="digipostadresse" type="xsd:string" minOccurs="1" maxOccurs="1">
+			        <xsd:annotation>
+			            <xsd:documentation>
+			            	Navnet på TLE-feltet som inneholder mottakers Digipostadresse.
+			            </xsd:documentation>
+			        </xsd:annotation>
+			    </xsd:element>
+
+			    <xsd:sequence>
+		            <xsd:element name="navn" type="dp:afp-navn" minOccurs="1" maxOccurs="1" />
+					<xsd:element name="adresse" type="dp:afp-adresse" minOccurs="1" maxOccurs="1" />
+					<xsd:element name="foedselsdato" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				</xsd:sequence>
+
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:simpleType name="autentiseringsnivaa">
+		<xsd:annotation>
+			<xsd:appinfo>
+				<jaxb:typesafeEnumClass />
+			</xsd:appinfo>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="PASSORD">
+				<xsd:annotation>
+					<xsd:documentation>Standardvalg. Krever kun passord av mottaker for å lese.</xsd:documentation>
+					<xsd:appinfo>
+						<jaxb:typesafeEnumMember name="PASSORD" />
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:enumeration>
+			<xsd:enumeration value="TO_FAKTOR">
+				<xsd:annotation>
+					<xsd:documentation>Krever to-faktor-autentisering av mottaker for å lese.</xsd:documentation>
+					<xsd:appinfo>
+						<jaxb:typesafeEnumMember name="TO_FAKTOR" />
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:enumeration>
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+	<xsd:simpleType name="sensitivitetsnivaa">
+		<xsd:annotation>
+			<xsd:appinfo>
+				<jaxb:typesafeEnumClass />
+			</xsd:appinfo>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="NORMALT">
+				<xsd:annotation>
+					<xsd:documentation>Standardvalg. Brukes for ikke-sensitive meldinger. Metadata om meldingen, 
+					slik som avsender og emne, vil vises i varsler som sendes ut (epost-varsel og evt. sms-varsel).
+					Metadata om meldingen vil også vises selv om brukeren ikke er innlogget på et sikkerhetsnivå
+					som gjør at innholdet i meldingen kan vises (styrt av "autentiseringsnivaa")</xsd:documentation>
+					<xsd:appinfo>
+						<jaxb:typesafeEnumMember name="NORMALT" />
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:enumeration>
+			<xsd:enumeration value="SENSITIVT">
+				<xsd:annotation>
+					<xsd:documentation>Brukes for sensitive meldinger. Metadata om meldingen, 
+					slik som avsender og emne, vil skjules i varsler som sendes ut (epost-varsel og evt. sms-varsel).
+					Metadata om meldingen vil også skjules når brukeren er innlogget på et sikkerhetsnivå
+					som gjør at innholdet i meldingen ikke kan vises (styrt av "autentiseringsnivaa")</xsd:documentation>
+					<xsd:appinfo>
+						<jaxb:typesafeEnumMember name="SENSITIVT" />
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:enumeration>
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+</xsd:schema>

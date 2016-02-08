@@ -10,6 +10,17 @@ import static Constants
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 
+
+
+import javax.xml.transform.Source
+
+
+import org.xml.sax.ErrorHandler
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI
+import javax.xml.transform.stream.StreamSource
+import javax.xml.validation.SchemaFactory
+
+
 class Main extends Script {                     
 	
 	enum JobType{MOTTAKERSPLITT,MASSEUTSENDELSE}
@@ -61,6 +72,8 @@ class Main extends Script {
 	static void main(String[] args) {           
         InvokerHelper.runScript(Main, args)     
     }
+
+   
 
     def run() {
 
@@ -192,14 +205,65 @@ class Main extends Script {
 		    	def mottakersplittXml = MakeMottakerSplittXML(mottagerList,config)
 		    	assert mottakersplittXml
 		    	WriteXML(Constants.JobDir+Constants.RequestFileNameMottakersplitt,mottakersplittXml)
+		    	validateMottakersplittXML()
 	    	}
 	    	if(testMasseutsendelse){
 		    	def masseutsendelseXml = MakeMasseutsendelseWithPrint(mottagerList,dokumentList,config)
 	        	assert masseutsendelseXml
 	        	WriteXML(Constants.JobDir+Constants.RequestFileNameMasseutsendelse,masseutsendelseXml)
+				validateMasseutsendelseXML()
         	}
 			println '##############################################'
     }
+
+    def validateMasseutsendelseXML(){
+    	File xml = new File( Constants.JobDir+Constants.RequestFileNameMasseutsendelse )
+    	boolean hasError = false
+		validateToXSD( xml , JobType.MASSEUTSENDELSE).each {
+  			println "Problem @ line $it.lineNumber, col $it.columnNumber : $it.message"
+  			hasError = true
+		}
+		assert !hasError
+    }
+
+    def validateMottakersplittXML(){
+    	File xml = new File( Constants.JobDir+Constants.RequestFileNameMottakersplitt )
+    	boolean hasError = false
+		validateToXSD( xml, JobType.MOTTAKERSPLITT ).each {
+  			println "Problem @ line $it.lineNumber, col $it.columnNumber : $it.message"
+  			hasError = true
+		}
+		assert !hasError 
+    }
+
+    List validateToXSD( File xml , JobType jobtype) {
+    	def xsdFiles = []
+    	def commonXSD = new StreamSource(new File('./xsd/digipost-common.xsd'))
+    	switch(jobtype) {
+    		case JobType.MOTTAKERSPLITT:
+    			def mottakersplittXSD = new StreamSource(new File('./xsd/mottakersplitt.xsd'))
+				xsdFiles.add(mottakersplittXSD)
+				xsdFiles.add(commonXSD)
+    		break
+    		case JobType.MASSEUTSENDELSE:
+    			def masseutsendelseXSD = new StreamSource(new File('./xsd/masseutsendelse.xsd'))
+				def printXSD = new StreamSource(new File('./xsd/print.xsd'))		
+				xsdFiles.add(printXSD)
+				xsdFiles.add(masseutsendelseXSD)
+				xsdFiles.add(commonXSD)
+    		break
+    	}
+
+  		SchemaFactory.newInstance( W3C_XML_SCHEMA_NS_URI )
+               .newSchema( (Source[]) xsdFiles.toArray() )
+               .newValidator().with { validator ->
+			    	List exceptions = []
+				    Closure<Void> handler = { exception -> exceptions << exception }
+				    errorHandler = [ warning: handler, fatalError: handler, error: handler ] as ErrorHandler
+				    validate( new StreamSource( xml ) )
+	    			exceptions
+  				}
+	}
 
     def TestMottakersplitt(def candidate){
 
@@ -255,7 +319,7 @@ class Main extends Script {
         	def xml = MakeMottakerSplittXML(mottagerList,config)
         	println 'Write XML'
         	WriteXML(Constants.JobDir+Constants.RequestFileNameMottakersplitt,xml)
-	
+			validateMottakersplittXML()
 			println 'ZIPing files'
 			ZipFiles(JobType.MOTTAKERSPLITT)
 			println 'SFTP to Digipost'
@@ -302,6 +366,7 @@ class Main extends Script {
         	def xml = MakeMasseutsendelseWithPrint(mottagerList,dokumentList,config)
         	println 'Write XML'
         	WriteXML(Constants.JobDir+Constants.RequestFileNameMasseutsendelse,xml)
+        	validateMasseutsendelseXML()
 			println 'Moving PDFs to Job dir'
 			MovePDFToJobDir(mottagerList)
 			println 'ZIPing files'
