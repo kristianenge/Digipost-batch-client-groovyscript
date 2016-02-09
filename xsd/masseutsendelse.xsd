@@ -22,10 +22,7 @@ Masseutsendelse request
 		<xsd:complexType>
 			<xsd:sequence>
 				<xsd:element name="jobb-innstillinger" type="dp:jobb-innstillinger" minOccurs="1" maxOccurs="1" />
-				<xsd:choice minOccurs="1" maxOccurs="1">
-					<xsd:element name="standard-distribusjon" type="dp:standard-distribusjon" minOccurs="1" maxOccurs="1" />
-					<xsd:element name="afp-distribusjon" type="dp:afp-distribusjon" minOccurs="1" maxOccurs="1" />
-				</xsd:choice>
+				<xsd:element name="standard-distribusjon" type="dp:standard-distribusjon" minOccurs="1" maxOccurs="1" />
 			</xsd:sequence>
 		</xsd:complexType>
 	</xsd:element>
@@ -139,45 +136,6 @@ Masseutsendelse request
         </xsd:sequence>
     </xsd:complexType>
 
-	<xsd:complexType name="afp-distribusjon">
-		<xsd:annotation>
-		    <xsd:documentation>
-		   		Innstillinger for å sende brev fra en AFP-fil.
-		    </xsd:documentation>
-		</xsd:annotation>
-		<xsd:sequence>
-			<xsd:element name="afp-fil" type="xsd:string" minOccurs="1" maxOccurs="1">
-				<xsd:annotation>
-				    <xsd:documentation>
-				   		Path til AFP-fil, relativ til zip-rot.
-				    </xsd:documentation>
-				</xsd:annotation>
-			</xsd:element>
-			<xsd:element name="globale-dokument-innstillinger" type="dp:dokument-innstillinger" minOccurs="1" maxOccurs="1">
-				<xsd:annotation>
-				    <xsd:documentation>
-				   		Innstillinger som skal gjelde alle dokumentene i AFP-filen.
-				    </xsd:documentation>
-				</xsd:annotation>
-			</xsd:element>
-			<xsd:element name="mottaker-identifikasjon" type="dp:afp-mottaker-identifikasjon" minOccurs="1" maxOccurs="1">
-				<xsd:annotation>
-				    <xsd:documentation>
-				   		Beskriver hvordan mottakere skal identifiseres fra TLE-felter i AFP-filen.
-				    </xsd:documentation>
-				</xsd:annotation>
-			</xsd:element>
- 			<xsd:element name="antall-dokumenter" type="xsd:int" minOccurs="0" maxOccurs="1">
-				<xsd:annotation>
-				    <xsd:documentation>
-				   		Antall dokumenter AFP-filen skal inneholde. Brukes til å validere at det riktige antallet PDF-filer er blitt generert.
-				    </xsd:documentation>
-				</xsd:annotation>
-			</xsd:element>
-		</xsd:sequence>
-	</xsd:complexType>
-
-
 	<xsd:complexType name="dokument-innstillinger">
 		<xsd:annotation>
 			<xsd:documentation>
@@ -230,8 +188,22 @@ Masseutsendelse request
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
+            <xsd:element name="print-farge" type="dp:print-farge" minOccurs="0" maxOccurs="1" default="MONOKROM">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Angir om dokumentet er sort/hvitt eller har farger. Gjelder kun for dokumenter som skal printes og leveres som fysisk post.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
         </xsd:sequence>
-	</xsd:complexType>
+    </xsd:complexType>
+
+    <xsd:simpleType name="print-farge">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="MONOKROM" />
+            <xsd:enumeration value="FARGER" />
+        </xsd:restriction>
+    </xsd:simpleType>
 
     <xsd:complexType name="refererbare-dokument-innstillinger">
     	<xsd:annotation>
@@ -384,7 +356,7 @@ Masseutsendelse request
 	    <xsd:complexContent>
 	      <xsd:extension base="dp:dokument">
               <xsd:sequence>
-                  <xsd:element name="kid" minOccurs="1" maxOccurs="1" nillable="false">
+                  <xsd:element name="kid" minOccurs="0" maxOccurs="1" nillable="false">
                       <xsd:simpleType>
                           <xsd:restriction base="xsd:string">
                               <xsd:pattern value="[0-9]{2,24}[0-9\-]{1}"/>
@@ -481,46 +453,6 @@ Masseutsendelse request
         </xsd:sequence>
     </xsd:complexType>
 
-	<xsd:complexType name="afp-mottaker-identifikasjon">
-        <xsd:annotation>
-            <xsd:documentation>
-            	Brukes til å fortelle Digipost hvilke TLE-felter i AFP-filen som skal brukes til mottaker-identifikasjon.
-            </xsd:documentation>
-        </xsd:annotation>
-		<xsd:sequence>
-			<xsd:element name="kunde-id" type="xsd:string" minOccurs="1" maxOccurs="1">
-		        <xsd:annotation>
-		            <xsd:documentation>
-		            	Navnet på TLE-feltet som inneholder avsenders egne unike id for postmottakeren.
-		            </xsd:documentation>
-		        </xsd:annotation>
-			</xsd:element>
-			<xsd:choice minOccurs="1" maxOccurs="1">
-				<xsd:element name="foedselsnummer" type="xsd:string" minOccurs="1" maxOccurs="1">
-			        <xsd:annotation>
-			            <xsd:documentation>
-			            	Navnet på TLE-feltet som inneholder mottakers fødselsnummer.
-			            </xsd:documentation>
-			        </xsd:annotation>
-			    </xsd:element>
-				<xsd:element name="digipostadresse" type="xsd:string" minOccurs="1" maxOccurs="1">
-			        <xsd:annotation>
-			            <xsd:documentation>
-			            	Navnet på TLE-feltet som inneholder mottakers Digipostadresse.
-			            </xsd:documentation>
-			        </xsd:annotation>
-			    </xsd:element>
-
-			    <xsd:sequence>
-		            <xsd:element name="navn" type="dp:afp-navn" minOccurs="1" maxOccurs="1" />
-					<xsd:element name="adresse" type="dp:afp-adresse" minOccurs="1" maxOccurs="1" />
-					<xsd:element name="foedselsdato" type="xsd:string" minOccurs="0" maxOccurs="1" />
-				</xsd:sequence>
-
-			</xsd:choice>
-		</xsd:sequence>
-	</xsd:complexType>
-	
 	<xsd:simpleType name="autentiseringsnivaa">
 		<xsd:annotation>
 			<xsd:appinfo>

@@ -3,11 +3,10 @@
 Digipost - grensesnitt for avsendere
 Print
 -->
-<xsd:schema 
-	version="1.0" 
+<xsd:schema
+	version="1.0"
 	targetNamespace="http://www.digipost.no/xsd/avsender2_1"
 	xmlns="http://www.digipost.no/xsd/avsender2_1"
-	xmlns:dp="http://www.digipost.no/xsd/avsender2_1"
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
 	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
 	jaxb:version="2.0"
@@ -54,7 +53,7 @@ Print
 			<xsd:element name="posttype" minOccurs="0" maxOccurs="1" default="B">
 				<xsd:annotation>
 					<xsd:documentation>
-						Forsendelse-type: A eller B for hhv.
+						Forsendelse-type: A eller B for hhv. A-Prioritert / A-post og B-Økonomi / B-post
 					</xsd:documentation>
 				</xsd:annotation>
 				<xsd:simpleType>
