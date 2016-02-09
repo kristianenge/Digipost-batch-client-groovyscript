@@ -1,25 +1,23 @@
+package digipost.batch.groovy
 import org.codehaus.groovy.runtime.InvokerHelper
-import static Constants
-import Util
 
 
-class Main extends Script {                     
+class Runner extends Script {                     
     
     static void main(String[] args) {           
-        InvokerHelper.runScript(Main, args)     
+        InvokerHelper.runScript(Runner, args)     
     }
-
-   
 
     def run() {
         Util util = new Util()
+        FileUtil fileUtil = new FileUtil()
         org.codehaus.groovy.runtime.NullObject.metaClass.toString = {return ''}
         if(!args){
             util.HelpText()
         }
         else if(args[0] == '-init')
         {
-            util.CreateFolderStructure()
+            fileUtil.CreateFolderStructure()
             util.GenerateCSVExample()
             util.GenerateConfigFile(new Config())
         }
@@ -27,27 +25,27 @@ class Main extends Script {
         {
             if(args.size() >= 2 && args[1] == 'all'){
                 println 'Clean all'
-                util.CleanFolderStructure()
+                fileUtil.CleanFolderStructure()
             }
             else{
                 println 'Clean generated files'
-                util.CleanGeneratedFiles()
+                fileUtil.CleanGeneratedFiles()
             }
         }
         else if(args[0] == '-mottakersplitt')
         {
-            Config config = HDD.load(Constants.ConfigFile)
+            Config config = FileUtil.load(Constants.ConfigFile)
             println config.toString()
             
-            util.CleanGeneratedFiles()
+            fileUtil.CleanGeneratedFiles()
             util.Mottakersplitt(config)
         }
         else if(args[0] == '-masseutsendelse')
         {
-            Config config = HDD.load(Constants.ConfigFile)
+            Config config = FileUtil.load(Constants.ConfigFile)
             println config.toString()
             
-            util.CleanGeneratedFiles()
+            fileUtil.CleanGeneratedFiles()
             util.Masseutsendelse(config)
         }
         else if(args[0] == '-test'){
@@ -67,22 +65,22 @@ class Main extends Script {
                 println 'Testing mottakersplitt and masseutsendelse'
                 shouldTestMottakersplitt = shouldTestMasseutsendelse = true
             }
-            Config config = HDD.load(Constants.ConfigFile)
-            util.CleanGeneratedFiles()
-            util.Test(config,shouldTestMottakersplitt,shouldTestMasseutsendelse)
+            Config config = FileUtil.load(Constants.ConfigFile)
+            fileUtil.CleanGeneratedFiles()
+            TestUtil.Test(config,shouldTestMottakersplitt,shouldTestMasseutsendelse)
         }
         else if (args[0] == '-report' && args[1] == 'masseutsendelse')
         {   
-            util.deleteContentOfDir(new File(Constants.ReportPath))
-            Config config = HDD.load(Constants.ConfigFile)
+            fileUtil.deleteContentOfDir(new File(Constants.ReportPath))
+            Config config = FileUtil.load(Constants.ConfigFile)
             Boolean fetchRemote =  args.size() == 3 && args[2] == 'remote'
             util.makeReport(config,JobType.MASSEUTSENDELSE,fetchRemote)      
         }
 
         else if (args[0] == '-report' && args[1] == 'mottakersplitt')
         {
-            util.deleteContentOfDir(new File(Constants.ReportPath))
-            Config config = HDD.load(Constants.ConfigFile)
+            fileUtil.deleteContentOfDir(new File(Constants.ReportPath))
+            Config config = FileUtil.load(Constants.ConfigFile)
             Boolean fetchRemote =  args.size() == 3 && args[2] == 'remote'
             util.makeReport(config,JobType.MOTTAKERSPLITT,fetchRemote)               
         }

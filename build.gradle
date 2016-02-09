@@ -2,7 +2,7 @@
 apply plugin: 'groovy'
 apply plugin: 'application'
 version = '1.0'
-mainClassName='Main'
+mainClassName='digipost.batch.groovy.Runner'
 
 repositories {
     mavenCentral()
@@ -10,8 +10,7 @@ repositories {
 
 dependencies {
 	compile 'org.codehaus.groovy:groovy-all:2.0.0'
-	compile 'org.codehaus.gpars:gpars:0.12'
-	compile 'com.jcraft:jsch:0.1.53'
+	compile 'com.jcraft:jsch:0.1.46'
 }
 
 task uberjar(type: Jar,dependsOn:[':compileJava',':compileGroovy']) {
