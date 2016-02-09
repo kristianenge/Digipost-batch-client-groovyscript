@@ -74,7 +74,7 @@ class Main extends Script {
    
 
     def run() {
-
+    	org.codehaus.groovy.runtime.NullObject.metaClass.toString = {return ''}
     	if(!args){
     		HelpText()
     	}
@@ -146,6 +146,17 @@ class Main extends Script {
 			Config config = HDD.load(Constants.ConfigFile)
 			Boolean fetchRemote =  args.size() == 3 && args[2] == 'remote'
 			makeReport(config,JobType.MOTTAKERSPLITT,fetchRemote)				
+		}
+		else if (args[0] == '-removeduplicates')
+		{
+			def mottagerList = PopulateMottagerListFromSourceCSV(true).unique { user -> user.kunde_id }
+			def dokumentList = PopulateDokumentList(true)
+        	def file  = new File(Constants.SourcePath+"nonDuplicate_source.csv")
+        	file << Constants.CsvHeader+'\n'
+        	mottagerList.each { mottager ->
+        		file << mottager.toCSV(dokumentList)
+        	}
+
 		}
 		else{
 			GenerateCSVExample()
@@ -471,11 +482,41 @@ class Main extends Script {
 	class Candidate{
 		def kunde_id,fulltNavn,fil_navn,mobile,vedlegg_navn,adresselinje1,adresselinje2,adresselinje3,postnummer,poststed,land,resultat
 		Faktura faktura = null
+		
 	}
 	@InheritConstructors
 	@ToString(includePackage = false,ignoreNulls = true,includeNames=true)
 	class Person extends Candidate  {
 		def ssn
+		def toCSV(dokumentMap){
+			def dokument =  dokumentMap.get(fil_navn)
+			def result = "";
+			result+=kunde_id+Constants.Csv_delimeter
+			result+=ssn+Constants.Csv_delimeter
+			result+=fulltNavn+Constants.Csv_delimeter
+			result+=adresselinje1+Constants.Csv_delimeter
+			result+=adresselinje2+Constants.Csv_delimeter
+			result+=postnummer+Constants.Csv_delimeter
+			result+=poststed+Constants.Csv_delimeter
+			result+=mobile+Constants.Csv_delimeter
+			result+=dokument.emne+Constants.Csv_delimeter
+			result+=fil_navn+Constants.Csv_delimeter
+			result+=vedlegg_navn+Constants.Csv_delimeter
+			result+=Constants.Csv_delimeter //orgnumber
+			result+=land+Constants.Csv_delimeter
+			if(faktura != null){
+				result+=faktura.kid+Constants.Csv_delimeter
+				result+=faktura.kontonummer+Constants.Csv_delimeter
+				result+=faktura.beloep+Constants.Csv_delimeter
+				result+=faktura.forfallsdato+Constants.Csv_delimeter
+			}
+			else{
+				result+=Constants.Csv_delimeter+Constants.Csv_delimeter+Constants.Csv_delimeter+Constants.Csv_delimeter
+			}
+			result+=resultat+'\n'
+			
+			result
+		}
 	}
 
 	@InheritConstructors
@@ -488,6 +529,35 @@ class Main extends Script {
 	@ToString(ignoreNulls = true,includeNames=true)
 	class Organization extends Candidate {
 		def orgNumber
+		def toCSV(dokumentMap){
+			def dokument =  dokumentMap.get(fil_navn)
+			def result = "";
+			result+=kunde_id+Constants.Csv_delimeter
+			result+=Constants.Csv_delimeter //ssn
+			result+=fulltNavn+Constants.Csv_delimeter
+			result+=adresselinje1+Constants.Csv_delimeter
+			result+=adresselinje2+Constants.Csv_delimeter
+			result+=postnummer+Constants.Csv_delimeter
+			result+=poststed+Constants.Csv_delimeter
+			result+=mobile+Constants.Csv_delimeter
+			result+=dokument.emne+Constants.Csv_delimeter
+			result+=fil_navn+Constants.Csv_delimeter
+			result+=vedlegg_navn+Constants.Csv_delimeter
+			result+=orgNumber+Constants.Csv_delimeter
+			result+=land+Constants.Csv_delimeter
+			if(faktura != null){
+				result+=faktura.kid+Constants.Csv_delimeter
+				result+=faktura.kontonummer+Constants.Csv_delimeter
+				result+=faktura.beloep+Constants.Csv_delimeter
+				result+=faktura.forfallsdato+Constants.Csv_delimeter
+			}
+			else{
+				result+=Constants.Csv_delimeter+Constants.Csv_delimeter+Constants.Csv_delimeter+Constants.Csv_delimeter
+			}
+			result+=resultat+'\n'
+			
+			result
+		}
 	}
 
 	class HDD {
@@ -1134,44 +1204,12 @@ class Main extends Script {
 		   
 		digipostFile.append(Constants.CsvHeader+';Resultat\n',Constants.Encoding)
 	
-		for(int i =0;i<candidates.size();i++){
-			def dokument =  dokumentMap.get(candidates.get(i).fil_navn)
-			def result = "";
-			result+=candidates.get(i).kunde_id+Constants.Csv_delimeter
-			if(candidates.get(i) instanceof Person){
-				result+=candidates.get(i).ssn+Constants.Csv_delimeter
-			}
-			else{
-				result+=Constants.Csv_delimeter
-			}
-			result+=candidates.get(i).fulltNavn+Constants.Csv_delimeter
-			result+=candidates.get(i).adresselinje1+Constants.Csv_delimeter
-			result+=candidates.get(i).adresselinje2+Constants.Csv_delimeter
-			result+=candidates.get(i).postnummer+Constants.Csv_delimeter
-			result+=candidates.get(i).poststed+Constants.Csv_delimeter
-			result+=candidates.get(i).mobile+Constants.Csv_delimeter
-			result+=dokument.emne+Constants.Csv_delimeter
-			result+=candidates.get(i).fil_navn+Constants.Csv_delimeter
-			result+=candidates.get(i).vedlegg_navn+Constants.Csv_delimeter
-			if(candidates.get(i) instanceof Organization){
-				result+=candidates.get(i).orgNumber+Constants.Csv_delimeter
-			}
-			else{
-				result+=Constants.Csv_delimeter
-			}
-			result+=candidates.get(i).land+Constants.Csv_delimeter
-			if(candidates.get(i).faktura != null){
-				result+=candidates.get(i).faktura.kid+Constants.Csv_delimeter
-				result+=candidates.get(i).faktura.kontonummer+Constants.Csv_delimeter
-				result+=candidates.get(i).faktura.beloep+Constants.Csv_delimeter
-				result+=candidates.get(i).faktura.forfallsdato+Constants.Csv_delimeter
-			}
-			else{
-				result+=Constants.Csv_delimeter+Constants.Csv_delimeter+Constants.Csv_delimeter+Constants.Csv_delimeter
-			}
-			result+=candidates.get(i).resultat+'\n'
-			
+		candidates.each{
+			def result = it.toCSV(dokumentMap)
 			digipostFile.append(result,Constants.Encoding)
+			print '.'
 		}
+		println ''
 	}
+
 }
