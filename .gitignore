@@ -1,1 +1,5 @@
 Digipost/
+.gradle
+build
+libs
+tmp
