@@ -8,6 +8,15 @@ repositories {
     mavenCentral()
 }
 
+sourceSets {
+    main {
+        resources {
+            srcDirs = ['src/main/resources']
+            includes = ["**/*.xsd"]
+        }
+    }
+}
+
 dependencies {
 	compile 'org.codehaus.groovy:groovy-all:2.0.0'
 	compile 'com.jcraft:jsch:0.1.46'
@@ -15,6 +24,7 @@ dependencies {
 
 task uberjar(type: Jar,dependsOn:[':compileJava',':compileGroovy']) {
     from files(sourceSets.main.output.classesDir)
+    from files(sourceSets.main.resources.srcDirs)
     from configurations.runtime.asFileTree.files.collect { zipTree(it) }
 
     manifest {

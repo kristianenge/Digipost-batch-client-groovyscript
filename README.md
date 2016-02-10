@@ -18,7 +18,7 @@ Groovy script for sending documents to Digipost batch API.
  * "avsender_id": "", -- From https://www.digipost.no/app/post#/org/config/detaljer
  * "sftp_bruker_id": "prod_", -- prod_*avsender_id*, e.g prod_12345
  * "jobb_navn": "Jobb navn", -- The name of the job. 
- * "emne": "Test Emne", -- The subject of the letter
+ * "emne": "digipost.batch.groovy.Test Emne", -- The subject of the letter
  * "sftpPassphrase": "", -- If you have a personal password on your ssh key
  * "autoGodkjennJobb": true, -- auto approval of job, set this to false to manually approve it in digipost.no/bedrift
  * "behandler_id": "" -- if you are a partner and are sending on behalf of someone
