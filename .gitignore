@@ -3,3 +3,4 @@ Digipost/
 build
 libs
 tmp
+.idea/*
