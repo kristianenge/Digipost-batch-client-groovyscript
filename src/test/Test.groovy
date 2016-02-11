@@ -7,4 +7,6 @@ import digipost.batch.groovy.TestUtil
 
 TestUtil testUtil = new TestUtil()
 
-testUtil.Test(new Config(),false,true)
+def config = new Config(Avsender_id:1234)
+
+testUtil.Test(config,true,false)
