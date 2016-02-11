@@ -7,4 +7,4 @@ import digipost.batch.groovy.TestUtil
 
 TestUtil testUtil = new TestUtil()
 
-testUtil.Test(new Config(),true,false)
+testUtil.Test(new Config(),false,true)
