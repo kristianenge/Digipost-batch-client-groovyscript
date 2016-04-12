@@ -6,17 +6,21 @@ import com.jcraft.jsch.*
 class SFTPUtil{
     void SftpToDigipost(Config config,JobType jobType){
         assert jobType
-        java.util.Properties jConfig = new java.util.Properties()
-        jConfig.put "StrictHostKeyChecking", "no"
+
+        java.util.Properties jcsConfig = new java.util.Properties()
+        jcsConfig.put "StrictHostKeyChecking", "no"
+
         JSch ssh = new JSch()
-        ssh.addIdentity(Constants.SftpKeyFilePath+Constants.SftpKeyFileName);
-        println config.Sftp_bruker_id +' '+Constants.SftpUrl+' '+ Constants.SftpPort
+        ssh.addIdentity(Constants.SftpKeyFilePath+Constants.SftpKeyFileName,config.SftpPassphrase)
         Session sess = ssh.getSession config.Sftp_bruker_id, Constants.SftpUrl, Constants.SftpPort
+
         sess.with {
-            setConfig jConfig
-            setPassword config.SftpPassphrase
+            setConfig jcsConfig
+            setPassword config.getSftpPassphrase()
+
             connect()
             Channel chan = openChannel "sftp"
+
             ChannelSftp sftp = (ChannelSftp) chan
             sftp.connect()
             def sessionsFile
@@ -31,15 +35,15 @@ class SFTPUtil{
                     break
             }
             
-            sftp.disconnect()
+            chan.disconnect()
             disconnect()
         }
     }
 
     void CheckForReceipt(Config config,JobType jobType){
         assert jobType
-        java.util.Properties jConfig = new java.util.Properties()
-        jConfig.put "StrictHostKeyChecking", "no"
+        java.util.Properties jcsConfig = new java.util.Properties()
+        jcsConfig.put "StrictHostKeyChecking", "no"
         String kvitteringsPath
         switch(jobType) {
             case JobType.MOTTAKERSPLITT:
@@ -51,13 +55,17 @@ class SFTPUtil{
         }
                     
         JSch ssh = new JSch()
-        ssh.addIdentity(Constants.SftpKeyFilePath+Constants.SftpKeyFileName)
+
+        println config.SftpPassphrase
+        ssh.addIdentity(Constants.SftpKeyFilePath+Constants.SftpKeyFileName,config.SftpPassphrase)
+
         Session sess = ssh.getSession config.Sftp_bruker_id, Constants.SftpUrl, Constants.SftpPort
         def beginTime = System.currentTimeMillis()
 
         sess.with {
-            setConfig jConfig
-            setPassword config.SftpPassphrase
+            setConfig jcsConfig
+            setPassword config.getSftpPassphrase()
+
             connect()
             Channel chan = openChannel "sftp"
             ChannelSftp sftp = (ChannelSftp) chan
