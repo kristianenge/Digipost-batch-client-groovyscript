@@ -95,10 +95,7 @@ class TestUtil{
 
     List validateToXSD( File xml , JobType jobType) {
         def xsdFiles = []
-
         def commonXSD = new StreamSource(new File(Constants.BasePath+"/xsd/digipost-common.xsd"))
-
-
         switch(jobType) {
             case JobType.MOTTAKERSPLITT:
                 def mottakersplittXSD = new StreamSource(new File(Constants.BasePath+"/xsd/mottakersplitt.xsd"))
@@ -125,7 +122,7 @@ class TestUtil{
             exceptions
         }
 
-        //validateXML(xsdFiles,xml)
+        validateXML(xsdFiles,xml)
     }
 
     /**
@@ -146,17 +143,18 @@ class TestUtil{
         if(candidate instanceof Person)
         {
             //print 'p'
-            assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
-            assert (candidate.ssn && !candidate.ssn.allWhitespace) || ((candidate?.fulltNavn && !candidate.fulltNavn.allWhitespace) && (candidate.adresselinje1 && !candidate.adresselinje1.allWhitespace) && (candidate.postnummer && !candidate.postnummer.allWhitespace) && (candidate.poststed && !candidate.poststed.allWhitespace))
-            assert (candidate.ssn) || (candidate.land && !candidate.land.allWhitespace)
+            assert (candidate.kunde_id  && !candidate.kunde_id?.allWhitespace) : "Kunde id has to be set"
+            assert (candidate.ssn && !candidate.ssn?.allWhitespace) || ((candidate.fulltNavn && !candidate.fulltNavn?.allWhitespace) && (candidate.adresselinje1 && !candidate.adresselinje1?.allWhitespace) && (candidate.postnummer && !candidate.postnummer?.allWhitespace) && (candidate.poststed && !candidate.poststed?.allWhitespace)) : "SSN or Name,Address and postalnumber/postalplace has to be set"
+            assert (candidate.land != null ) && (!candidate.land?.allWhitespace) : "Land has to be set"
+
         }
         else if(candidate instanceof Organization) //def kunde_id,orgNumber,name,resultat
         {
             //print 'b'
-            assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
-            assert (candidate.orgNumber  && !candidate.orgNumber.allWhitespace)
-            assert (candidate.fulltNavn  && !candidate.fulltNavn.allWhitespace)
-            assert (candidate.land && !candidate.land.allWhitespace)
+            assert (candidate.kunde_id  && !candidate.kunde_id?.allWhitespace) : "Kunde id has to be set"
+            assert (candidate.orgNumber  && !candidate.orgNumber?.allWhitespace) : "Org number has to be set"
+            assert (candidate.fulltNavn  && !candidate.fulltNavn?.allWhitespace) : "Fulltnavn has to be set"
+            assert (candidate.land != null ) && (!candidate.land?.allWhitespace) : "Land has to be set"
         }
     }
 
@@ -165,19 +163,19 @@ class TestUtil{
         if(candidate instanceof Person)
         {
             //print 'p'
-            assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
-            assert (candidate.ssn && !candidate.ssn.allWhitespace) || ((candidate?.fulltNavn && !candidate.fulltNavn.allWhitespace) && (candidate.adresselinje1 && !candidate.adresselinje1.allWhitespace) && (candidate.postnummer && !candidate.postnummer.allWhitespace) && (candidate.poststed && !candidate.poststed.allWhitespace))
-            assert (candidate.fil_navn && !candidate.fil_navn.allWhitespace)
-            assert (candidate.ssn) || (candidate.land && !candidate.land.allWhitespace)
+            assert (candidate.kunde_id  && !candidate.kunde_id?.allWhitespace) : "Kunde id has to be set"
+            assert (candidate.ssn && !candidate.ssn?.allWhitespace) || ((candidate.fulltNavn && !candidate.fulltNavn?.allWhitespace) && (candidate.adresselinje1 && !candidate.adresselinje1?.allWhitespace) && (candidate.postnummer && !candidate.postnummer?.allWhitespace) && (candidate.poststed && !candidate.poststed?.allWhitespace)) : "SSN or Name,Address and postalnumber/postalplace has to be set"
+            assert (candidate.land != null ) && (!candidate.land?.allWhitespace) : "Land has to be set"
+            assert (candidate.fil_navn && !candidate.fil_navn?.allWhitespace) : "Filnavn has to be set"
         }
         else if(candidate instanceof Organization)
         {
             //print 'b'
-            assert (candidate.kunde_id  && !candidate.kunde_id.allWhitespace)
-            assert (candidate.orgNumber  && !candidate.orgNumber.allWhitespace)
-            assert (candidate.fulltNavn  && !candidate.fulltNavn.allWhitespace)
-            assert (candidate.fil_navn && !candidate.fil_navn.allWhitespace)
-            assert (candidate.land && !candidate.land.allWhitespace)
+            assert (candidate.kunde_id  && !candidate.kunde_id?.allWhitespace) : "Kunde id has to be set"
+            assert (candidate.orgNumber  && !candidate.orgNumber?.allWhitespace) : "Org number has to be set"
+            assert (candidate.fulltNavn  && !candidate.fulltNavn?.allWhitespace) : "Fulltnavn has to be set"
+            assert (candidate.land != null ) && (!candidate.land?.allWhitespace) : "Land has to be set"
+            assert (candidate.fil_navn && !candidate.fil_navn?.allWhitespace) : "Filnavn has to be set"
         }
     }
 }

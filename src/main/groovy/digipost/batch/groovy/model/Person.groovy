@@ -7,8 +7,8 @@ import digipost.batch.groovy.Constants
 @InheritConstructors
 @ToString(ignoreNulls = true,includeNames=true)
 class Person extends Candidate  {
-    def ssn
-    def toCSV(documentMap){
+    String ssn
+    String toCSV(documentMap){
         def document =  documentMap.get(fil_navn)
         def result = "";
         result+=kunde_id+Constants.Csv_delimeter

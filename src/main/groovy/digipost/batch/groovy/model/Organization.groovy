@@ -8,7 +8,7 @@ import digipost.batch.groovy.Constants
 @InheritConstructors
 @ToString(ignoreNulls = true,includeNames=true)
 class Organization extends Candidate {
-    def orgNumber
+    String orgNumber
     def toCSV(documentMap){
         def document =  documentMap.get(fil_navn)
         def result = "";

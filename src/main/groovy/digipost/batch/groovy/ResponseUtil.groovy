@@ -13,11 +13,11 @@ static Map PopulateResultMapFromResult(JobType jobType){
                 doc = new XmlSlurper().parse(Constants.ResultPath+'/'+'masseutsendelse-resultat.xml')
                 break
         }
-        
+
         doc."mottaker-resultater".each { res ->
-            
+
           res.children().each { tag ->
-            String kundeID = ""
+            def kundeID = ""
             tag.children().each { inner ->
                 if(inner.name() == "kunde-id" ){
                     kundeID = inner.text()

@@ -66,7 +66,7 @@ class SFTPUtil{
             def timeout = false
             println "waiting for receipt....."
             while(!hasReceipt && !timeout){
-                timeout = ((System.currentTimeMillis() - beginTime)  >= Constants.SftpReceiptTimout) // abort after X sec.
+                timeout = ((System.currentTimeMillis() - beginTime)  >= Constants.SftpReceiptTimeout) // abort after X sec.
                 Vector<ChannelSftp.LsEntry> list = sftp.ls("."+kvitteringsPath+"*.zip");
                 sleep 1000 //sleep for 1000 ms
                 if(list.size() >= 2){

@@ -1,10 +1,4 @@
 package digipost.batch.groovy
-
-import groovy.transform.ToString
-import groovy.transform.InheritConstructors
-import groovy.json.JsonBuilder
-import groovy.json.JsonSlurper
-
 import digipost.batch.groovy.model.*
 
 class BatchClient{
@@ -142,7 +136,7 @@ class BatchClient{
     }
 
 
-    void UpdateCandidateWithResult(ArrayList candidates, Map resultat) {
+    void UpdateCandidateWithResult(ArrayList candidates, LinkedHashMap resultat) {
             
         for(Candidate m  in candidates){
             if (resultat.get(m.kunde_id.toString()) != null) {
@@ -154,7 +148,7 @@ class BatchClient{
     }
 
     def ShowXSDFiles() {
-        File common = new File(Constants.XSDPath+"/digipost-common.xsd")
+        def common = new File(Constants.XSDPath+"/digipost-common.xsd")
         common << getClass().getResourceAsStream("/digipost-common.xsd" )
 
         File mottakersplitt = new File(Constants.XSDPath+"/mottakersplitt.xsd")

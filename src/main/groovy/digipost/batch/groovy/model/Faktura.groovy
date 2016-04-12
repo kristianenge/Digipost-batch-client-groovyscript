@@ -5,5 +5,5 @@ import groovy.transform.InheritConstructors
 @InheritConstructors
 @ToString(ignoreNulls = true,includeNames=true)
 class Faktura{
-    def kid,beloep,kontonummer,forfallsdato
+    String kid,beloep,kontonummer,forfallsdato
 }
