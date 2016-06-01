@@ -4,3 +4,4 @@ build
 libs
 tmp
 .idea/*
+src/test/resources/.~lock.source.csv#

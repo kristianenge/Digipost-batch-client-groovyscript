@@ -19,10 +19,14 @@ class TestUtil{
     }
 
     def Test(Config config,Boolean testMottakersplitt,Boolean testMasseutsendelse){
+        Test(Constants.SourcePath+Constants.SourceFile,config,testMottakersplitt,testMasseutsendelse)
+    }
+
+    def Test(String source, Config config, Boolean testMottakersplitt,Boolean testMasseutsendelse){
         println '############-=digipost.batch.groovy.Test=-###############'
         println '[p] == person, [b] == bedrift'
-            def mottagerList = SourceUtil.PopulateMottagerListFromSourceCSV(true)
-            def dokumentList = SourceUtil.PopulateDokumentList(true)
+            def mottagerList = SourceUtil.PopulateMottagerListFromSourceCSV(source,true)
+            def dokumentList = SourceUtil.PopulateDokumentList(source,true)
             dokumentList.each{ k, v -> println "${k}:${v}" }
             assert mottagerList.size() > 0
 

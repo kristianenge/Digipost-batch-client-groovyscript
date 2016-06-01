@@ -158,8 +158,6 @@ static def MakeMasseutsendelseWithPrint(ArrayList mottagerList,Map dokumentList,
                                     "adresselinje1"(m.adresselinje1)
                                     if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
                                         "adresselinje2"(m.adresselinje2)
-                                    if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
-                                        "adresselinje3"(m.adresselinje3)
                                     "postnummer"(m?.postnummer?.padLeft(4,'0'))
                                     "poststed"(m.poststed)
                                 }
@@ -169,8 +167,6 @@ static def MakeMasseutsendelseWithPrint(ArrayList mottagerList,Map dokumentList,
                                     "adresselinje1"(m.adresselinje1)
                                     if(m.adresselinje2 != null && m.adresselinje2.length() > 0)
                                         "adresselinje2"(m.adresselinje2)
-                                    if(m.adresselinje3 != null && m.adresselinje3.length() > 0)
-                                        "adresselinje3"(m.adresselinje3)
                                     "land"(m.land)
                                 }
                             }

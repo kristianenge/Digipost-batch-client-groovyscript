@@ -1,24 +1,48 @@
 package digipost.batch.groovy
 
 class Constants{
-	static String CsvHeader= 'Kunde ID;Fødsels- og personnummer;Fullt navn, fornavn først;Adresselinje;Adresselinje 2;Postnummer;Poststed;Mobil;Emne;Filnavn;Vedlegg;Organisasjonsnummer(hvis bedrift);Land;kid;kontonummer;beløp;forfallsdato'
-	public static int kunde_id_plass = 0,
-					  foedselsnummer_plass = 1,
-					  fullt_navn_plass = 2,
-					  adresselinje1_plass = 3,
-					  adresselinje2_plass = 4,
-					  postnummer_plass = 5,
-					  poststed_plass = 6,
-					  mobil_plass = 7,
-					  emne_plass = 8,
-					  filnavn_plass = 9,
-					  vedlegg_plass = 10,
-					  orgnummer_plass = 11,
-					  land_plass = 12,
-					  kid_plass = 13,
-					  kontonummer_plass = 14,
-					  beloep_plass = 15,
-					  forfallsdato_plass = 16
+	static String CsvHeader(){
+		def csvHeader="";
+		Header.values().each { Header value ->
+			if(csvHeader.length()==0)
+			{
+				csvHeader += value.toString().capitalize()
+			}
+			else{
+				csvHeader += ";"+ value.toString().capitalize()
+			}
+
+		}
+		return csvHeader.replaceAll('_plass','');
+	}
+	public static enum Header{
+		kunde_id(0),
+		foedselsnummer(1),
+		fullt_navn(2),
+		adresselinje1(3),
+		adresselinje2(4),
+		postnummer(5),
+		poststed(6),
+		mobil(7),
+		emne(8),
+		filnavn(9),
+		vedlegg(10),
+		orgnummer(11),
+		land(12),
+		kid(13),
+		kontonummer(14),
+		beloep(15),
+		forfallsdato(16);
+
+		private final int flagValue;
+
+		Header(int flag){
+			this.flagValue = flag
+		}
+		public int getFlagValue(){
+			return flagValue
+		}
+	}
 
 	static String BasePath = './Digipost/'
 	static String Csv_delimeter = ';'
@@ -32,7 +56,7 @@ class Constants{
 	
 	static String SftpUrl = 'sftp.digipost.no'
 	static int SftpPort = 22
-	static int SftpReceiptTimeout = 600000
+	static int SftpReceiptTimeout = 3600000
 	static String SftpKeyFilePath = BasePath+'/SFTP/keys/'
 	static String SftpKeyFileName = 'key.txt'
 	static String ZipFilePath = BasePath+'SFTP/out/'
