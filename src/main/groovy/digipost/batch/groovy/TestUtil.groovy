@@ -31,7 +31,7 @@ class TestUtil{
             assert mottagerList.size() > 0
 
             checkForDuplicates(mottagerList)
-
+            doesAllFilesExist(Constants.SourcePath,mottagerList)
             mottagerList.each { mottager ->
 
                 if(testMottakersplitt){
@@ -44,6 +44,7 @@ class TestUtil{
                     
                     //print 'MU['
                     TestMasseutsendelse(mottager)
+
                     //print ']'
                 }
             }
@@ -75,6 +76,15 @@ class TestUtil{
             println errorMessage
         }
         assert diff == 0
+    }
+
+    def doesAllFilesExist(def sourcePath, def mottagerList){
+        mottagerList.each{mottager ->
+            def exist = new File(sourcePath+mottager.fil_navn).exists()
+            if(!exist)
+                println "Candidate id["+mottager.kunde_id+"] is missing the file:"+mottager.fil_navn
+            assert exist
+        }
     }
 
     def validateMasseutsendelseXML(){

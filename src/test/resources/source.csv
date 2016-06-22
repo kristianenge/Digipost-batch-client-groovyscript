@@ -1,4 +1,0 @@
-Kunde ID;Fødsels- og personnummer;Fullt navn, fornavn først;Adresselinje;Adresselinje 2;Postnummer;Poststed;Mobil;Emne;Filnavn;Vedlegg;Organisasjonsnummer(hvis bedrift);Land;kid;kontonummer;beløp;forfallsdato
-1;31108412311;Kristian Enge;Collettsgate 68;;0460;Oslo;;Viktig dokument;1.pdf;;;NORWAY;;;;
-2;01018032734;Testulf testesen;TestVeien 1;Testveien 2;0101;Andeby;12333211;Faktura;2.pdf;2_vedlegg.pdf;;NORWAY;123123123;123123123;100.0;01.01.2017
-3;;Uten Fødselsnummer;TestVeien 3;;0105;Stokke;12322111;Trolololo;3.pdf;;;NORWAY;;;;

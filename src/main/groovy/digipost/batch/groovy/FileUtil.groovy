@@ -88,7 +88,7 @@ class FileUtil{
                 break
         }
            
-        digipostFile.append(Constants.CsvHeader+';Resultat\n',Constants.Encoding)
+        digipostFile.append(Constants.CsvHeader()+';Resultat\n',Constants.Encoding)
     
         candidates.each{
             def result = it.toCSV(dokumentMap)

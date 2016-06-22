@@ -4,10 +4,12 @@
 
 import digipost.batch.groovy.Config
 import digipost.batch.groovy.TestUtil
+import digipost.batch.groovy.SourceUtil
 
 TestUtil testUtil = new TestUtil()
-def source = this.getClass().getResource('resources/source.csv').path
+def source = this.getClass().getResource('resources/Digipost/Source/source.csv').path
 
-def config = new Config(Avsender_id:1234)
 
-testUtil.Test(source,config,true,false)
+def mottagerList = SourceUtil.PopulateMottagerListFromSourceCSV(source,true)
+
+def result = testUtil.doesAllFilesExist('resources/Digipost/Source/',mottagerList)

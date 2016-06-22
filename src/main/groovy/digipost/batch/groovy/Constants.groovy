@@ -1,7 +1,7 @@
 package digipost.batch.groovy
 
 class Constants{
-	static String CsvHeader(){
+	public static String CsvHeader(){
 		def csvHeader="";
 		Header.values().each { Header value ->
 			if(csvHeader.length()==0)
