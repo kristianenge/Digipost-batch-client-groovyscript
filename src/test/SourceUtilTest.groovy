@@ -1,6 +1,6 @@
 import digipost.batch.groovy.SourceUtil
 
-String testFile = this.getClass().getResource('resources/source.csv').path
+String testFile = this.getClass().getResource('resources/Digipost/Source/source.csv').path
 
 
 def dokumentList = SourceUtil.PopulateDokumentList(testFile,true)

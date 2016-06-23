@@ -106,6 +106,14 @@ static def MakeMasseutsendelseWithPrint(ArrayList mottagerList,Map dokumentList,
                             "innstillinger"(){
                                 if(entry.value.emne)
                                     "emne"(entry.value.emne)
+                                if(entry.value.sms_tidspunkt || entry.value.sms_ettertimer) {
+                                    "sms-varsling"() {
+                                        if(entry.value.sms_tidspunkt)
+                                            "tidspunkt"(entry.value.sms_tidspunkt)
+                                        if(entry.value.sms_ettertimer)
+                                            "etter-timer"(entry.value.sms_ettertimer)
+                                    }
+                                }
                             }
                         }
 

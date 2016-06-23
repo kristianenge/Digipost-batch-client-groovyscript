@@ -32,7 +32,9 @@ class Constants{
 		kid(13),
 		kontonummer(14),
 		beloep(15),
-		forfallsdato(16);
+		forfallsdato(16),
+		sms_tidspunkt(17),
+		sms_ettertimer(18);
 
 		private final int flagValue;
 

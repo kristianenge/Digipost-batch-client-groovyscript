@@ -20,6 +20,8 @@ class SourceUtil{
             else {
                 def filnavn = fields[Constants.Header.filnavn.getFlagValue()]?.trim()
                 def vedlegg = fields[Constants.Header.vedlegg.getFlagValue()]?.trim()
+                def sms_tidspunkt = fields[Constants.Header.sms_tidspunkt.getFlagValue()]?.trim()
+                def sms_ettertimer = fields[Constants.Header.sms_ettertimer.getFlagValue()]?.trim()?.toInteger()
                 def faktura = null
                 if(fields[Constants.Header.kid.getFlagValue()] != null && fields[Constants.Header.kid.getFlagValue()].length() > 1){ //kid;kontonummer;beløp;forfall
                     faktura = new Faktura(
@@ -34,7 +36,13 @@ class SourceUtil{
                 }
                 else
                 {
-                    dokumentMap.put(filnavn , new Dokument(dokument_id:'hoved_'+counter++,emne:fields[Constants.Header.emne.getFlagValue()]?.trim(), faktura:faktura))
+                    def dokument = new Dokument(dokument_id:'hoved_'+counter++,emne:fields[Constants.Header.emne.getFlagValue()]?.trim(), faktura:faktura)
+                    if(sms_tidspunkt != null)
+                        dokument.sms_tidspunkt = sms_tidspunkt
+                    if(sms_ettertimer != null)
+                        dokument.sms_ettertimer = sms_ettertimer
+
+                    dokumentMap.put(filnavn , dokument)
                 }
                 
                 if(dokumentMap.containsKey(vedlegg)){
@@ -105,6 +113,7 @@ class SourceUtil{
                     )
                     person.faktura = faktura
                 }
+
                 mottagerList << person
             }
 
