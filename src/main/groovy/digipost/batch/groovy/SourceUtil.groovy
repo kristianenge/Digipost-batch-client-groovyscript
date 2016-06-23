@@ -21,7 +21,8 @@ class SourceUtil{
                 def filnavn = fields[Constants.Header.filnavn.getFlagValue()]?.trim()
                 def vedlegg = fields[Constants.Header.vedlegg.getFlagValue()]?.trim()
                 def sms_tidspunkt = fields[Constants.Header.sms_tidspunkt.getFlagValue()]?.trim()
-                def sms_ettertimer = fields[Constants.Header.sms_ettertimer.getFlagValue()]?.trim()?.toInteger()
+                def sms_ettertimer = fields[Constants.Header.sms_ettertimer.getFlagValue()]?.trim()
+                def aapningskvittering_gruppe = fields[Constants.Header.aapningskvittering_gruppe.getFlagValue()]?.trim()
                 def faktura = null
                 if(fields[Constants.Header.kid.getFlagValue()] != null && fields[Constants.Header.kid.getFlagValue()].length() > 1){ //kid;kontonummer;beløp;forfall
                     faktura = new Faktura(
@@ -36,11 +37,11 @@ class SourceUtil{
                 }
                 else
                 {
-                    def dokument = new Dokument(dokument_id:'hoved_'+counter++,emne:fields[Constants.Header.emne.getFlagValue()]?.trim(), faktura:faktura)
+                    def dokument = new Dokument(dokument_id:'hoved_'+counter++,emne:fields[Constants.Header.emne.getFlagValue()]?.trim(), faktura:faktura,aapningskvittering_gruppe:aapningskvittering_gruppe)
                     if(sms_tidspunkt != null)
                         dokument.sms_tidspunkt = sms_tidspunkt
-                    if(sms_ettertimer != null)
-                        dokument.sms_ettertimer = sms_ettertimer
+                    if(sms_ettertimer != null && sms_ettertimer.length() > 0)
+                        dokument.sms_ettertimer = sms_ettertimer?.toInteger()
 
                     dokumentMap.put(filnavn , dokument)
                 }

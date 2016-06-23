@@ -34,7 +34,8 @@ class Constants{
 		beloep(15),
 		forfallsdato(16),
 		sms_tidspunkt(17),
-		sms_ettertimer(18);
+		sms_ettertimer(18),
+		aapningskvittering_gruppe(19);
 
 		private final int flagValue;
 

@@ -114,6 +114,9 @@ static def MakeMasseutsendelseWithPrint(ArrayList mottagerList,Map dokumentList,
                                             "etter-timer"(entry.value.sms_ettertimer)
                                     }
                                 }
+                                if(entry.value.aapningskvittering_gruppe){
+                                    "aapningskvitteringsgruppe"(entry.value.aapningskvittering_gruppe)
+                                }
                             }
                         }
 
